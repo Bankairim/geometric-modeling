@@ -409,11 +409,5 @@ bool myMesh::triangulate(myFace* f) {
 //		halfedges.push_back(CA);
 //	}
 //
-//	// Supprimez la face originale de la liste des faces
-//	/*auto it = std::remove(faces.begin(), faces.end(), f);
-//	faces.erase(it, faces.end());
-//	delete f;*/
 //	return true;
 //}
-
-

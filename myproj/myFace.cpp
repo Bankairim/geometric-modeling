@@ -36,4 +36,3 @@ void myFace::computeNormal()
 	*normal = computedNormal;
 	std::cout << "normal face : " << normal->dX << std::endl;
 }
-
