@@ -27,6 +27,9 @@ public:
 
 	void triangulate();
 	bool triangulate(myFace *);
+	void removeFace(myFace* f);
+	void updateTwinHalfedges();
+	void createTriangle(myVertex* A, myVertex* B, myVertex* C);
 
 	void clear();
 

@@ -26,7 +26,7 @@ void myVertex::computeNormal()
     // Commencer par la halfedge d'origine.
     myHalfedge* start = originof;
     myHalfedge* current = start;
-    int maxIterations = 2000;  // Choisissez une valeur raisonnable pour votre maillage.
+    int maxIterations = 2000;  // Si ca boucle trop longtemps on s'arrete à ce chiffre
     int iteration = 0;
 
     do {
@@ -42,7 +42,7 @@ void myVertex::computeNormal()
             current = current->twin->next;
         }
         else {
-            break;  // Si current->twin est nullptr, sortez de la boucle.
+            break;  // Si current->twin est nullptr, on sort de la boucle.
         }
 
         iteration++;

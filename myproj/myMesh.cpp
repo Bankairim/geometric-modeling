@@ -182,8 +182,6 @@ void myMesh::computeNormals()
 			if (v) v->computeNormal();
 		}
 	}
-
-
 }
 
 
@@ -247,124 +245,175 @@ void myMesh::subdivisionCatmullClark()
 
 
 void myMesh::triangulate() {
-	std::vector<myFace*> triangles;
+	std::vector<myFace*> toRemove;
+	for (myFace* f : faces)
+	{
 
-	// Création d'une copie de la liste des faces pour éviter les modifications pendant l'itération
-	std::vector<myFace*> originalFaces = faces;
-
-	for (myFace* f : originalFaces) {
-		if (!triangulate(f)) {
-			std::vector<myVertex*> vertices;
-			myHalfedge* startEdge = f->adjacent_halfedge;
-			myHalfedge* currentEdge = startEdge;
-			do {
-				vertices.push_back(currentEdge->source);
-				currentEdge = currentEdge->next;
-			} while (currentEdge != startEdge);
-
-			myVector3D referenceVector(0, 0, 1);
-			bool isFaceUpwards = (*f->normal) * referenceVector > 0;
-
-			for (size_t i = 0; i < vertices.size(); ++i) {
-				myVertex* A = vertices[i];
-				myVertex* B = vertices[(i + 1) % vertices.size()];
-				myVertex* C = vertices[(i + 2) % vertices.size()];
-
-				if (isFaceUpwards) {
-					bool isEar = true;
-
-					for (myVertex* vertex : vertices) {
-						if (vertex != A && vertex != B && vertex != C) {
-							// Vérification si le point est dans le triangle
-							myVector3D v0 = *(C->point) - *(A->point);
-							myVector3D v1 = *(B->point) - *(A->point);
-							myVector3D v2 = *(vertex->point) - *(A->point);
-
-							float d00 = v0 * v0;
-							float d01 = v0 * v1;
-							float d11 = v1 * v1;
-							float d20 = v2 * v0;
-							float d21 = v2 * v1;
-							float denom = d00 * d11 - d01 * d01;
-							float alpha = (d11 * d20 - d01 * d21) / denom;
-							float beta = (d00 * d21 - d01 * d20) / denom;
-							float gamma = 1.0f - alpha - beta;
-							if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-								isEar = false;
-								break;
-							}
-						}
-					}
-
-					if (isEar) {
-						// Créer un nouveau triangle avec les sommets A, B, et C
-						myFace* newTriangle = new myFace();
-
-						// Créer des demi-arêtes pour le nouveau triangle
-						myHalfedge* he1 = new myHalfedge();
-						myHalfedge* he2 = new myHalfedge();
-						myHalfedge* he3 = new myHalfedge();
-
-						he1->source = A;
-						he2->source = B;
-						he3->source = C;
-
-						he1->next = he2;
-						he2->next = he3;
-						he3->next = he1;
-
-						newTriangle->adjacent_halfedge = he1;
-
-						triangles.push_back(newTriangle); // Ajouter le triangle à la liste des triangles
-
-						myHalfedge* heExitingB = B->originof;
-						myHalfedge* heBeforeB = heExitingB->prev;
-						myHalfedge* heAfterB = heExitingB->next;
-
-						heBeforeB->next = heAfterB;
-						heAfterB->prev = heBeforeB;
-
-						// Libérer la mémoire associée à la demi-arête sortant de B
-						delete heExitingB;
-
-						// Si vous ne prévoyez pas de réutiliser le sommet B ailleurs, vous pouvez également le supprimer
-						// delete B;
-
-						break;
-					}
-
-				}
-			}
+		if (triangulate(f)) {
+			toRemove.push_back(f);
 		}
 	}
-
-	// Ajouter les nouveaux triangles à la liste des faces
-	faces.insert(faces.end(), triangles.begin(), triangles.end());
+	for (int i = 0; i < toRemove.size(); i++)
+	{
+		faces.erase(remove(faces.begin(), faces.end(), toRemove[i]),faces.end());
+	}
+	
 }
-
-
-
-
-
-
 
 bool myMesh::triangulate(myFace* f) {
-	// Comptez le nombre de sommets dans la face
-	int counter = 0;
-	myHalfedge* adj = f->adjacent_halfedge;
-	myHalfedge* start = adj;
+	
+	std::vector<myVertex*> faceVertices;
+	myHalfedge* startEdge = f->adjacent_halfedge;
+	myHalfedge* currentEdge = startEdge;
+	do { //Algorithme de parcours de face
+		faceVertices.push_back(currentEdge->source);
+		currentEdge = currentEdge->next;
+	} while (currentEdge != f->adjacent_halfedge);
+	if (faceVertices.size() <= 3)return false;
+	// Calcul du centre de la face
+	myPoint3D center(0, 0, 0);
+	for (myVertex* v : faceVertices) {
+		center += *(v->point);
+	}
+	center /= faceVertices.size();
 
-	do {
-		adj = adj->next;
-		++counter;
-	} while (adj != start);
+	// Création du nouveau sommet pour le centre
+	myVertex* centerVertex = new myVertex();
+	centerVertex->point = new myPoint3D(center.X, center.Y, center.Z);
+	vertices.push_back(centerVertex); // Ajoutez le nouveau sommet à la liste des sommets
 
-	// Si la face a déjà 3 sommets (c'est-à-dire qu'elle est déjà un triangle), rien à faire
-	return counter<=3; 
+	// Pour un polygone convexe, chaque paire consécutive de sommets avec le centre forme un triangle.
+	for (size_t i = 0; i < faceVertices.size() - 1; ++i) {
+		myVertex* A = centerVertex;
+		myVertex* B = faceVertices[i];
+		myVertex* C = faceVertices[i + 1];
 
+		// Créez un triangle avec les sommets A, B, et C
+		myFace* newTriangle = new myFace();
 
+		myHalfedge* AB = new myHalfedge();
+		myHalfedge* BC = new myHalfedge();
+		myHalfedge* CA = new myHalfedge();
+
+		AB->source = A;
+		BC->source = B;
+		CA->source = C;
+
+		AB->next = BC;
+		BC->next = CA;
+		CA->next = AB;
+
+		AB->prev = CA;
+		BC->prev = AB;
+		CA->prev = BC;
+
+		AB->adjacent_face = newTriangle;
+		BC->adjacent_face = newTriangle;
+		CA->adjacent_face = newTriangle;
+
+		newTriangle->adjacent_halfedge = AB;
+
+		// Ajoutez le nouveau triangle à la liste des faces
+		faces.push_back(newTriangle);
+
+		// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
+		//halfedges.push_back(AB);
+		//halfedges.push_back(BC);
+		halfedges.push_back(CA);
+	}
+	// Ajoutez le dernier triangle avec le dernier sommet et le centre
+	myVertex* A = centerVertex;
+	myVertex* B = faceVertices.back(); // Dernier sommet
+	myVertex* C = faceVertices.front(); // Premier sommet
+
+	myFace* newTriangle = new myFace();
+
+	myHalfedge* AB = new myHalfedge();
+	myHalfedge* BC = new myHalfedge();
+	myHalfedge* CA = new myHalfedge();
+
+	AB->source = A;
+	BC->source = B;
+	CA->source = C;
+
+	AB->next = BC;
+	BC->next = CA;
+	CA->next = AB;
+
+	AB->prev = CA;
+	BC->prev = AB;
+	CA->prev = BC;
+
+	AB->adjacent_face = newTriangle;
+	BC->adjacent_face = newTriangle;
+	CA->adjacent_face = newTriangle;
+
+	newTriangle->adjacent_halfedge = AB;
+
+	// Ajoutez le dernier triangle à la liste des faces
+	faces.push_back(newTriangle);
+
+	// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
+	//halfedges.push_back(AB);
+	//halfedges.push_back(BC);
+	halfedges.push_back(CA);
+
+	return true;
 }
 
-
+//bool myMesh::triangulate(myFace* f) {
+//	std::vector<myVertex*> faceVertices;
+//	myHalfedge* startEdge = f->adjacent_halfedge;
+//	myHalfedge* currentEdge = startEdge;
+//	do { 
+//		faceVertices.push_back(currentEdge->source);
+//		currentEdge = currentEdge->next;
+//	} while (currentEdge != startEdge);
+//
+//	// Pour un polygone convexe, chaque triplet de sommets consécutifs forme une oreille.
+//	for (size_t i = 0; i < faceVertices.size() - 2; ++i) {
+//		myVertex* A = faceVertices[i];
+//		myVertex* B = faceVertices[i + 1];
+//		myVertex* C = faceVertices[i + 2];
+//
+//		myFace* newTriangle = new myFace();
+//
+//		myHalfedge* AB = new myHalfedge();
+//		myHalfedge* BC = new myHalfedge();
+//		myHalfedge* CA = new myHalfedge();
+//
+//		AB->source = A;
+//		BC->source = B;
+//		CA->source = C;
+//
+//		AB->next = BC;
+//		BC->next = CA;
+//		CA->next = AB;
+//
+//		AB->prev = CA;
+//		BC->prev = AB;
+//		CA->prev = BC;
+//
+//		AB->adjacent_face = newTriangle;
+//		BC->adjacent_face = newTriangle;
+//		CA->adjacent_face = newTriangle;
+//
+//		newTriangle->adjacent_halfedge = AB;
+//
+//		// Ajoutez le nouveau triangle à la liste des faces
+//		faces.push_back(newTriangle);
+//
+//		// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
+//		//halfedges.push_back(AB);
+//		halfedges.push_back(BC);
+//		halfedges.push_back(CA);
+//	}
+//
+//	// Supprimez la face originale de la liste des faces
+//	/*auto it = std::remove(faces.begin(), faces.end(), f);
+//	faces.erase(it, faces.end());
+//	delete f;*/
+//	return true;
+//}
 
 
