@@ -1,3 +1,17 @@
 ﻿  myMesh.cpp
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(250,20): warning C4018: '<' : incompatibilité signed/unsigned
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(255,40): error C3861: 'triangulateFace' : identificateur introuvable
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(283,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(284,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(285,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(286,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(287,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+nfd.lib(nfd_win.obj) : warning LNK4075: ' /EDITANDCONTINUE' ignoré à cause de la spécification '/OPT:ICF'
+LINK : warning LNK4098: conflit entre la bibliothèque par défaut 'MSVCRTD' et les autres bibliothèques ; utilisez /NODEFAULTLIB:library
+  Génération de code en cours
+  0 of 834 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Fin de la génération du code
+LINK : warning LNK4286: le symbole '_sprintf_s' défini dans 'MSVCRT.lib(error.obj)' est importé par 'nfd.lib(nfd_win.obj)'
+nfd.lib(nfd_common.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'nfd.lib(nfd_common.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
+nfd.lib(nfd_win.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'nfd.lib(nfd_win.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
+  myproj.vcxproj -> C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\Release\myproj.exe

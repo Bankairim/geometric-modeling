@@ -247,15 +247,108 @@ void myMesh::subdivisionCatmullClark()
 
 
 void myMesh::triangulate() {
+	std::vector<myFace*> triangles;
 
+	// Création d'une copie de la liste des faces pour éviter les modifications pendant l'itération
+	std::vector<myFace*> originalFaces = faces;
+
+	for (myFace* f : originalFaces) {
+		if (!triangulate(f)) {
+			std::vector<myVertex*> vertices;
+			myHalfedge* startEdge = f->adjacent_halfedge;
+			myHalfedge* currentEdge = startEdge;
+			do {
+				vertices.push_back(currentEdge->source);
+				currentEdge = currentEdge->next;
+			} while (currentEdge != startEdge);
+
+			myVector3D referenceVector(0, 0, 1);
+			bool isFaceUpwards = (*f->normal) * referenceVector > 0;
+
+			for (size_t i = 0; i < vertices.size(); ++i) {
+				myVertex* A = vertices[i];
+				myVertex* B = vertices[(i + 1) % vertices.size()];
+				myVertex* C = vertices[(i + 2) % vertices.size()];
+
+				if (isFaceUpwards) {
+					bool isEar = true;
+
+					for (myVertex* vertex : vertices) {
+						if (vertex != A && vertex != B && vertex != C) {
+							// Vérification si le point est dans le triangle
+							myVector3D v0 = *(C->point) - *(A->point);
+							myVector3D v1 = *(B->point) - *(A->point);
+							myVector3D v2 = *(vertex->point) - *(A->point);
+
+							float d00 = v0 * v0;
+							float d01 = v0 * v1;
+							float d11 = v1 * v1;
+							float d20 = v2 * v0;
+							float d21 = v2 * v1;
+							float denom = d00 * d11 - d01 * d01;
+							float alpha = (d11 * d20 - d01 * d21) / denom;
+							float beta = (d00 * d21 - d01 * d20) / denom;
+							float gamma = 1.0f - alpha - beta;
+							if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+								isEar = false;
+								break;
+							}
+						}
+					}
+
+					if (isEar) {
+						// Créer un nouveau triangle avec les sommets A, B, et C
+						myFace* newTriangle = new myFace();
+
+						// Créer des demi-arêtes pour le nouveau triangle
+						myHalfedge* he1 = new myHalfedge();
+						myHalfedge* he2 = new myHalfedge();
+						myHalfedge* he3 = new myHalfedge();
+
+						he1->source = A;
+						he2->source = B;
+						he3->source = C;
+
+						he1->next = he2;
+						he2->next = he3;
+						he3->next = he1;
+
+						newTriangle->adjacent_halfedge = he1;
+
+						triangles.push_back(newTriangle); // Ajouter le triangle à la liste des triangles
+
+						myHalfedge* heExitingB = B->originof;
+						myHalfedge* heBeforeB = heExitingB->prev;
+						myHalfedge* heAfterB = heExitingB->next;
+
+						heBeforeB->next = heAfterB;
+						heAfterB->prev = heBeforeB;
+
+						// Libérer la mémoire associée à la demi-arête sortant de B
+						delete heExitingB;
+
+						// Si vous ne prévoyez pas de réutiliser le sommet B ailleurs, vous pouvez également le supprimer
+						// delete B;
+
+						break;
+					}
+
+				}
+			}
+		}
+	}
+
+	// Ajouter les nouveaux triangles à la liste des faces
+	faces.insert(faces.end(), triangles.begin(), triangles.end());
 }
 
 
 
 
-bool myMesh::triangulate(myFace* f) {
-	std::vector<myFace*> triangles;
 
+
+
+bool myMesh::triangulate(myFace* f) {
 	// Comptez le nombre de sommets dans la face
 	int counter = 0;
 	myHalfedge* adj = f->adjacent_halfedge;
@@ -267,7 +360,7 @@ bool myMesh::triangulate(myFace* f) {
 	} while (adj != start);
 
 	// Si la face a déjà 3 sommets (c'est-à-dire qu'elle est déjà un triangle), rien à faire
-	return counter<=3; // Liste vide car aucune nouvelle face créée
+	return counter<=3; 
 
 
 }
