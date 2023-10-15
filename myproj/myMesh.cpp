@@ -49,145 +49,141 @@ void myMesh::checkMesh()
 // Fonction pour lire un fichier .obj et stocker ses données dans la structure halfedge.
 bool myMesh::readFile(std::string filename)
 {
-    // Déclaration de variables pour stocker les lignes du fichier, les types d'éléments (comme "v" pour les sommets ou "f" pour les faces) et les données temporaires.
-    string s, t, u;
-    vector<int> faceids; // Pour stocker les identifiants des sommets des faces.
-    myHalfedge** hedges; // Pointeur vers un tableau de halfedges.
+	// Déclaration de variables pour stocker les lignes du fichier, les types d'éléments (comme "v" pour les sommets ou "f" pour les faces) et les données temporaires.
+	string s, t, u;
+	vector<int> faceids; // Pour stocker les identifiants des sommets des faces.
+	myHalfedge** hedges; // Pointeur vers un tableau de halfedges.
 
-    // Ouvrir le fichier .obj pour la lecture.
-    ifstream fin(filename);
-    // Si le fichier ne peut pas être ouvert, afficher un message d'erreur et retourner false.
-    if (!fin.is_open()) {
-        cout << "Unable to open file!\n";
-        return false;
-    }
-    // Stocker le nom du fichier pour une utilisation ultérieure.
-    name = filename;
+	// Ouvrir le fichier .obj pour la lecture.
+	ifstream fin(filename);
+	// Si le fichier ne peut pas être ouvert, afficher un message d'erreur et retourner false.
+	if (!fin.is_open()) {
+		cout << "Unable to open file!\n";
+		return false;
+	}
+	// Stocker le nom du fichier pour une utilisation ultérieure.
+	name = filename;
 
-    // Créer une map pour stocker les halfedges et leurs jumeaux (twins).
-    map<pair<int, int>, myHalfedge*> twin_map;
-    map<pair<int, int>, myHalfedge*>::iterator it;
+	// Créer une map pour stocker les halfedges et leurs jumeaux (twins).
+	map<pair<int, int>, myHalfedge*> twin_map;
+	map<pair<int, int>, myHalfedge*>::iterator it;
 
-    // Lire le fichier ligne par ligne.
-    while (getline(fin, s))
-    {
-        // Utiliser un stringstream pour extraire les données de la ligne.
-        stringstream myline(s);
-        myline >> t; // Extraire le type d'élément (comme "v" ou "f").
+	// Lire le fichier ligne par ligne.
+	while (getline(fin, s))
+	{
+		// Utiliser un stringstream pour extraire les données de la ligne.
+		stringstream myline(s);
+		myline >> t; // Extraire le type d'élément (comme "v" ou "f").
 
-        // Si l'élément est un groupe ("g"), ne rien faire.
-        if (t == "g") {}
-        // Si l'élément est un sommet ("v").
-        else if (t == "v")
-        {
-            float x, y, z;
-            // Extraire les coordonnées x, y et z du sommet.
-            myline >> x >> y >> z;
-            // Afficher les coordonnées pour le débogage.
-            cout << "v " << x << " " << y << " " << z << endl;
-            myPoint3D * Pt = new myPoint3D(x, y, z);
-            myVertex* v = new myVertex(); 
-            v->point = Pt;                 
-            vertices.push_back(v);        
+		// Si l'élément est un groupe ("g"), ne rien faire.
+		if (t == "g") {}
+		// Si l'élément est un sommet ("v").
+		else if (t == "v")
+		{
+			float x, y, z;
+			// Extraire les coordonnées x, y et z du sommet.
+			myline >> x >> y >> z;
+			// Afficher les coordonnées pour le débogage.
+			cout << "v " << x << " " << y << " " << z << endl;
+			myPoint3D* Pt = new myPoint3D(x, y, z);
+			myVertex* v = new myVertex();
+			v->point = Pt;
+			vertices.push_back(v);
 
-        }
-        else if (t == "mtllib") {}
+		}
+		else if (t == "mtllib") {}
 
-        else if (t == "usemtl") {}
+		else if (t == "usemtl") {}
 
-        else if (t == "s") {}
+		else if (t == "s") {}
 
-        else if (t == "f")
-        {
-            faceids.clear();
-            while (myline >> u) // read indices of vertices from a face into a container - it helps to access them later 
-                faceids.push_back(atoi((u.substr(0, u.find("/"))).c_str()) - 1);
-            if (faceids.size() < 3) // ignore degenerate faces
-                continue;
+		else if (t == "f")
+		{
+			faceids.clear();
+			while (myline >> u) // read indices of vertices from a face into a container - it helps to access them later 
+				faceids.push_back(atoi((u.substr(0, u.find("/"))).c_str()) - 1);
+			if (faceids.size() < 3) // ignore degenerate faces
+				continue;
 
-            hedges = new myHalfedge * [faceids.size()]; // allocate the array for storing pointers to half-edges
-            for (unsigned int i = 0; i < faceids.size(); i++)
-                hedges[i] = new myHalfedge(); // pre-allocate new half-edges
+			hedges = new myHalfedge * [faceids.size()]; // allocate the array for storing pointers to half-edges
+			for (unsigned int i = 0; i < faceids.size(); i++)
+				hedges[i] = new myHalfedge(); // pre-allocate new half-edges
 
-            myFace * f = new myFace(); // allocate the new face
-            f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
+			myFace* f = new myFace(); // allocate the new face
+			f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
+			
 
-            for (unsigned int i = 0; i < faceids.size(); i++)
-            {
-                int iplusone = (i + 1) % faceids.size();
-                int iminusone = (i - 1 + faceids.size()) % faceids.size();
+			for (unsigned int i = 0; i < faceids.size(); i++)
+			{
+				int iplusone = (i + 1) % faceids.size();
+				int iminusone = (i - 1 + faceids.size()) % faceids.size();
 
-                // YOUR CODE COMES HERE!
+				// YOUR CODE COMES HERE!
 
-                // connect prevs, and next
-                hedges[i]->next = hedges[iplusone];
-                hedges[i]->prev = hedges[iminusone];
-
-                // search for the twins using twin_map
-                pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
-                it = twin_map.find(edgeKey);
-                if (it != twin_map.end()) {
-                    hedges[i]->twin = it->second;
-                    it->second->twin = hedges[i];
-                }
-                else {
-                    twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
-                }
-
-                // set originof
-                if (vertices[faceids[i]]) {
-                    vertices[faceids[i]]->originof = hedges[i];
-                }
-                else {
-                    std::cout << "Error: vertices[" << faceids[i] << "] is nullptr!" << std::endl;
-                }
-
-                hedges[i]->source = vertices[faceids[i]];
+				// connect prevs, and next
+				hedges[i]->next = hedges[iplusone];
+				hedges[i]->prev = hedges[iminusone];
+				hedges[i]->adjacent_face = f;
 
 
-                //std::cout << "vertices (coord X) : " << i << vertices[faceids[i]]->originof->source->point->X << std::endl;
-                // push edges to halfedges in myMesh
-                halfedges.push_back(hedges[i]);
+				// search for the twins using twin_map
+				pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
+				it = twin_map.find(edgeKey);
+				if (it != twin_map.end()) {
+					hedges[i]->twin = it->second;
+					it->second->twin = hedges[i];
+				}
+				else {
+					twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
+				}
 
-            }
-            // push faces to faces in myMesh
-            faces.push_back(f);
+				// set originof
+				vertices[faceids[i]]->originof = hedges[i];
+				hedges[i]->source = vertices[faceids[i]];
 
-            cout << "f";
-            // Extraire les identifiants des sommets de la face.
-            while (myline >> u) cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
-            cout << endl;
-        }
-    }
+				// push edges to halfedges in myMesh
+				halfedges.push_back(hedges[i]);
 
-    // Vérifier la cohérence du maillage.
-    checkMesh();
-    // Normaliser les coordonnées des sommets.
-    normalize();
+			}
+			// push faces to faces in myMesh
+			faces.push_back(f);
 
-    // Retourner true pour indiquer que la lecture a réussi.
-    return true;
+			cout << "f";
+			// Extraire les identifiants des sommets de la face.
+			while (myline >> u) cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
+			cout << endl;
+		}
+	}
+
+	// Vérifier la cohérence du maillage.
+	checkMesh();
+	// Normaliser les coordonnées des sommets.
+	normalize();
+
+	// Retourner true pour indiquer que la lecture a réussi.
+	return true;
 }
 
 
 
 void myMesh::computeNormals()
 {
-    // Parcourir toutes les faces et calculer leurs normales
-    for (myFace* f : faces)
-    {
-        f->computeNormal();
-    }
-    // Vérifier si 'vertices' est non vide avant d'appeler computeNormal
-    if (!vertices.empty()) {
-        // Parcourir tous les sommets et calculer leurs normales
-        for (myVertex* v : vertices)
-        {
-            if (v) v->computeNormal();
-        }
-    }
+	// Parcourir toutes les faces et calculer leurs normales
+	for (myFace* f : faces)
+	{
+		f->computeNormal();
+	}
+	// Vérifier si 'vertices' est non vide avant d'appeler computeNormal
+	if (!vertices.empty()) {
+		// Parcourir tous les sommets et calculer leurs normales
+		for (myVertex* v : vertices)
+		{
+			//A ce stade la, v est censé avoir un point et un originof du readfile et va obtenir une normal basée sur son originof.
+			if (v) v->computeNormal();
+		}
+	}
 
-   
+
 }
 
 
@@ -250,26 +246,32 @@ void myMesh::subdivisionCatmullClark()
 }
 
 
-void myMesh::triangulate()
-{
+void myMesh::triangulate() {
 
 }
 
 
-bool myMesh::triangulate(myFace* f)
-{
-    int counter = 0;
-    myHalfedge* adj = f->adjacent_halfedge;
-    myHalfedge* start = adj;
 
-    do
-    {
-        adj = adj->next;
-        ++counter;
-    } while (adj != start);
 
-    return counter > 3;
+bool myMesh::triangulate(myFace* f) {
+	std::vector<myFace*> triangles;
+
+	// Comptez le nombre de sommets dans la face
+	int counter = 0;
+	myHalfedge* adj = f->adjacent_halfedge;
+	myHalfedge* start = adj;
+
+	do {
+		adj = adj->next;
+		++counter;
+	} while (adj != start);
+
+	// Si la face a déjà 3 sommets (c'est-à-dire qu'elle est déjà un triangle), rien à faire
+	return counter<=3; // Liste vide car aucune nouvelle face créée
+
+
 }
+
 
 
 

@@ -61,8 +61,7 @@ void myVertex::computeNormal()
     // Normaliser la normale.
     accumulatedNormal.normalize();
 
-    // Mettez à jour la normale du sommet.
-    std::cout << "accumulatedNormal : " << accumulatedNormal.dX << accumulatedNormal.dY << accumulatedNormal.dZ << std::endl;
+    // Mettez à jour la normale du sommet
     *normal = accumulatedNormal; // Assurez-vous que "normal" est bien un pointeur vers myVector3D
 }
 
