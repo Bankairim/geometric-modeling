@@ -245,6 +245,7 @@ void myMesh::subdivisionCatmullClark()
 
 
 void myMesh::triangulate() {
+	
 	std::vector<myFace*> toRemove;
 	for (myFace* f : faces)
 	{
@@ -257,7 +258,42 @@ void myMesh::triangulate() {
 	{
 		faces.erase(remove(faces.begin(), faces.end(), toRemove[i]),faces.end());
 	}
-	
+	std::cout << " Triangulated faces : " << faces.size() << endl;
+
+	int triangles = 0;
+	int quads = 0;
+	int pentagons = 0;
+	int hexagons = 0;
+	int septagons = 0;
+	int octagons = 0;
+
+	for (myFace* f : faces) {
+		int vertexCount = 0;
+		myHalfedge* startEdge = f->adjacent_halfedge;
+		myHalfedge* currentEdge = startEdge;
+		do {
+			vertexCount++;
+			currentEdge = currentEdge->next;
+		} while (currentEdge != startEdge);
+
+		switch (vertexCount) {
+		case 3: triangles++; break;
+		case 4: quads++; break;
+		case 5: pentagons++; break;
+		case 6: hexagons++; break;
+		case 7: septagons++; break;
+		case 8: octagons++; break;
+			// Add more cases if needed
+		}
+	}
+
+	// Print the results
+	std::cout << "Triangles: " << triangles << std::endl;
+	std::cout << "Quads: " << quads << std::endl;
+	std::cout << "Pentagons: " << pentagons << std::endl;
+	std::cout << "Hexagons: " << hexagons << std::endl;
+	std::cout << "Septagons: " << septagons << std::endl;
+	std::cout << "Octagons: " << octagons << std::endl;
 }
 
 bool myMesh::triangulate(myFace* f) {
