@@ -37,4 +37,5 @@
 .vs/
 .debug/
 .ipch/
-.release/
+.Release/
+.myproj/Release/
