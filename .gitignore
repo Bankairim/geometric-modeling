@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+#Dossiers locaux du projet
+.vs/
+debug/
+ipch/
+myproj/Release/
+Release/
+
