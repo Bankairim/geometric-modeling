@@ -83,7 +83,7 @@ bool myMesh::readFile(std::string filename)
 			float x, y, z;
 			// Extraire les coordonnées x, y et z du sommet.
 			myline >> x >> y >> z;
-			// Afficher les coordonnées pour le débogage.
+			// Afficher les coordonnées pour le débogage. couscous
 			cout << "v " << x << " " << y << " " << z << endl;
 			myPoint3D* Pt = new myPoint3D(x, y, z);
 			myVertex* v = new myVertex();
