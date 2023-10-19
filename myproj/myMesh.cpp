@@ -168,7 +168,7 @@ bool myMesh::readFile(std::string filename)
 
 void myMesh::computeNormals()
 {
-	// Parcourir toutes les faces et calculer leurs normales
+	// Parcourir toutes les  faces et calculer leurs normales
 	for (myFace* f : faces)
 	{
 		f->computeNormal();
