@@ -258,6 +258,18 @@ void display()
 			myVertex *v1 = (*it)->source;
 			if ((*it)->twin == NULL) continue;
 			myVertex *v2 = (*it)->twin->source;
+			// On doit récupérer le vecteur qui vient du point de la caméra vers le sommet.
+			myVector3D q = camera_eye - *v1->point;
+			myVector3D normal1 = *e->adjacent_face->normal;
+			myVector3D normal2 = *e->twin->adjacent_face->normal;
+			float scalar1 = q * normal1;
+			float scalar2 = q * normal2;
+			if (scalar1 * scalar2 < 0) //une des faces est opposée à la vue de la caméra et l'autre est face à la caméra 
+			{
+				silhouette_edges.push_back(v1->index);
+				silhouette_edges.push_back(v2->index);
+			}
+
 
 			if ( 0 /*ADD THE CONDITION TO CHECK IF THE HALFEDGE DEFINED BY (V1, V2) IS A SILHOUETTE EDGE*/ )
 			{

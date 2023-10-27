@@ -387,17 +387,6 @@ bool myMesh::triangulate(myFace* f) {
 
 	newTriangle->adjacent_halfedge = AB;
 
-	// search for the twins using twin_map
-	pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
-	it = twin_map.find(edgeKey);
-	if (it != twin_map.end()) {
-		hedges[i]->twin = it->second;
-		it->second->twin = hedges[i];
-	}
-	else {
-		twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
-	}
-
 	// Ajoutez le dernier triangle à la liste des faces
 	faces.push_back(newTriangle);
 
