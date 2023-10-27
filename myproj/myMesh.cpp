@@ -294,11 +294,11 @@ void myMesh::triangulate() {
 	std::cout << "Hexagons: " << hexagons << std::endl;
 	std::cout << "Septagons: " << septagons << std::endl;
 	std::cout << "Octagons: " << octagons << std::endl;
+	checkMesh();
 }
 
 bool myMesh::triangulate(myFace* f) {
 	
-	vector<int> faceids; // Pour stocker les identifiants des sommets des faces.
 	std::vector<myVertex*> faceVertices;
 	myHalfedge* startEdge = f->adjacent_halfedge;
 	myHalfedge* currentEdge = startEdge;
@@ -349,14 +349,31 @@ bool myMesh::triangulate(myFace* f) {
 		CA->adjacent_face = newTriangle;
 
 		newTriangle->adjacent_halfedge = AB;
+		// Associer les twins
+		if (i > 0) { // Si ce n'est pas la première itération
+			myHalfedge* previousCA = halfedges.back(); // La dernière demi-arête ajoutée lors de l'itération précédente
+			previousCA->twin = AB;
+			AB->twin = previousCA;
 
+			myHalfedge* previousBC = halfedges[halfedges.size() - faceVertices.size() + i - 1];
+			previousBC->twin = CA;
+			CA->twin = previousBC;
+
+			if (i < faceVertices.size() - 2) { // If it's not the second last iteration
+				myHalfedge* nextBC = halfedges[halfedges.size() - faceVertices.size() + i + 1];
+				BC->twin = nextBC;
+				nextBC->twin = BC;
+			}
+
+		}
 		// Ajoutez le nouveau triangle à la liste des faces
 		faces.push_back(newTriangle);
 
 		// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
 		halfedges.push_back(AB);
-		//halfedges.push_back(BC);
+		halfedges.push_back(BC);
 		halfedges.push_back(CA);
+		
 	}
 	// Ajoutez le dernier triangle avec le dernier sommet et le centre
 	myVertex* A = centerVertex;
@@ -387,6 +404,10 @@ bool myMesh::triangulate(myFace* f) {
 
 	newTriangle->adjacent_halfedge = AB;
 
+	myHalfedge* firstAB = halfedges[halfedges.size() - 2 * faceVertices.size()]; // Le premier AB ajouté
+	myHalfedge* lastCA = halfedges.back(); // La dernière demi-arête ajoutée
+	firstAB->twin = lastCA;
+	lastCA->twin = firstAB;
 	// Ajoutez le dernier triangle à la liste des faces
 	faces.push_back(newTriangle);
 
@@ -394,7 +415,8 @@ bool myMesh::triangulate(myFace* f) {
 	halfedges.push_back(AB);
 	//halfedges.push_back(BC);
 	halfedges.push_back(CA);
-
+	std::cout << "checkMesh after triangulation of face " << std::endl;
+	checkMesh();
 	return true;
 }
 

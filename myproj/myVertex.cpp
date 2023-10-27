@@ -31,11 +31,11 @@ void myVertex::computeNormal()
 
     do {
         // Vérifier les pointeurs avant de les déréférencer.
-        std::cout << "Nous entrons dans la condition myVertex" << std::endl;
+        //std::cout << "Nous entrons dans la condition myVertex" << std::endl;
 
         if (current && current->adjacent_face && current->adjacent_face->normal) {
 
-            std::cout << "condition adjacent face normal vérifiée. Il existe une normale" << std::endl;
+            //std::cout << "condition adjacent face normal vérifiée. Il existe une normale" << std::endl;
             accumulatedNormal += *(current->adjacent_face->normal); // Utilisez l'opérateur d'addition surchargé de myVector3D
             faceCount++;
         }
