@@ -39,3 +39,7 @@
 .ipch/
 .Release/
 .myproj/Release/
+.myproj/Debug/
+.myproj/Release/
+.myproj/include/
+.myproj/shaders/
