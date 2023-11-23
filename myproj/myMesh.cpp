@@ -2,24 +2,18 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <map>
-#include <utility>
 #include <GL/glew.h>
 #include "myvector3d.h"
-#include <myFace.h>
+#include "myFace.h"
 
 using namespace std;
 
 myMesh::myMesh(void) {
     //todo
 }
-
-
-
 myMesh::~myMesh(void) {
     //todo
 }
-
 
 void myMesh::clear()
 {
@@ -32,6 +26,7 @@ void myMesh::clear()
 	vector<myFace *> empty_faces;         faces.swap(empty_faces);
 }
 
+//Detect twins inconsistency. 
 void myMesh::checkMesh()
 {
 	vector<myHalfedge *>::iterator it;
@@ -45,6 +40,75 @@ void myMesh::checkMesh()
 	else cout << "Each edge has a twin!\n";
 }
 
+//Detects lack of twins, inconsistent twins and isolated halfedges.
+bool myMesh::checkMeshAdvanced()
+{
+	bool isMeshValid = true;
+
+	// A helper lambda function to check if a face is isolated
+	auto isIsolatedFace = [](myFace* f) -> bool {
+		myHalfedge* startEdge = f->adjacent_halfedge;
+		myHalfedge* currentEdge = startEdge;
+		do {
+			if (currentEdge->twin != nullptr) {
+				return false; // Found a twin, not isolated
+			}
+			currentEdge = currentEdge->next;
+		} while (currentEdge != startEdge);
+		return true; // No twins found, face is isolated
+		};
+
+	for (auto& he : halfedges) {
+		if (he->twin == nullptr) {
+			cout << "Error! Half-edge from vertex " << he->source->index;
+			if (he->next) {
+				cout << " to vertex " << he->next->source->index;
+			}
+			else {
+				cout << " to an unknown vertex";
+			}
+			cout << " lacks a twin." << endl;
+			isMeshValid = false;
+		}
+		else if (he->twin->twin != he) {
+			cout << "Error! Inconsistent twin: Half-edge from vertex " << he->source->index;
+			if (he->next) {
+				cout << " to vertex " << he->next->source->index;
+			}
+			else {
+				cout << " to an unknown vertex";
+			}
+			cout << " has an inconsistent twin. ";
+			if (he->twin) {
+				cout << "Twin goes from vertex " << he->twin->source->index;
+				if (he->twin->next) {
+					cout << " to vertex " << he->twin->next->source->index;
+				}
+				else {
+					cout << " to an unknown vertex";
+				}
+			}
+			else {
+				cout << "Twin is missing.";
+			}
+			// Additional diagnostics
+			cout << " | Adjacent face of this half-edge: " << (he->adjacent_face ? "Present" : "Missing");
+			cout << " | Adjacent face of twin half-edge: " << (he->twin && he->twin->adjacent_face ? "Present" : "Missing");
+			
+			isMeshValid = false;
+			cout << endl;
+		}
+
+	}
+	if (isMeshValid) {
+		cout << "Each edge has a twin and the twin relationship is mutual." << endl;
+	}
+	else {
+		cout << "There are issues with edge twins in the mesh." << endl;
+	}
+
+	return isMeshValid;
+}
 
 // Fonction pour lire un fichier .obj et stocker ses données dans la structure halfedge.
 bool myMesh::readFile(std::string filename)
@@ -65,7 +129,7 @@ bool myMesh::readFile(std::string filename)
 	name = filename;
 
 	// Créer une map pour stocker les halfedges et leurs jumeaux (twins).
-	map<pair<int, int>, myHalfedge*> twin_map;
+	map<pair<int, int>, myHalfedge*> twin_map; 
 	map<pair<int, int>, myHalfedge*>::iterator it;
 
 	// Lire le fichier ligne par ligne.
@@ -88,8 +152,12 @@ bool myMesh::readFile(std::string filename)
 			myPoint3D* Pt = new myPoint3D(x, y, z);
 			myVertex* v = new myVertex();
 			v->point = Pt;
-			vertices.push_back(v);
 
+			// 23/11:2023 : Set the index of the vertex
+			v->index = vertices.size();
+			vertices.push_back(v);
+			/*for (int i = 0; i < vertices.size(); i++)
+				std::cout << "vertices[" << i << "] = " << vertices[i]->index << endl;*/
 		}
 		else if (t == "mtllib") {}
 
@@ -107,7 +175,15 @@ bool myMesh::readFile(std::string filename)
 
 			hedges = new myHalfedge * [faceids.size()]; // allocate the array for storing pointers to half-edges
 			for (unsigned int i = 0; i < faceids.size(); i++)
+			{
 				hedges[i] = new myHalfedge(); // pre-allocate new half-edges
+				// Set the source vertex of the half-edge
+				hedges[i]->source = vertices[faceids[i]];
+
+				// Debug print to check the source index
+				//cout << "Hedges[" << i << "] -> source-> index = " << hedges[i]->source->index << endl;
+			}
+				
 
 			myFace* f = new myFace(); // allocate the new face
 			f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
@@ -126,16 +202,16 @@ bool myMesh::readFile(std::string filename)
 				hedges[i]->adjacent_face = f;
 
 
-				// search for the twins using twin_map
-				pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
-				it = twin_map.find(edgeKey);
-				if (it != twin_map.end()) {
-					hedges[i]->twin = it->second;
-					it->second->twin = hedges[i];
-				}
-				else {
-					twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
-				}
+				//// search for the twins using twin_map
+				//pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
+				//it = twin_map.find(edgeKey);
+				//if (it != twin_map.end()) {
+				//	hedges[i]->twin = it->second;
+				//	it->second->twin = hedges[i];
+				//}
+				//else {
+				//	twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
+				//}
 
 				// set originof
 				vertices[faceids[i]]->originof = hedges[i];
@@ -143,28 +219,30 @@ bool myMesh::readFile(std::string filename)
 
 				// push edges to halfedges in myMesh
 				halfedges.push_back(hedges[i]);
-
+				//cout << "Hedges[" << i << "] -> source-> index = " << hedges[i]->source->index << endl;
+				
 			}
 			// push faces to faces in myMesh
 			faces.push_back(f);
 
-			cout << "f";
+			//cout << "f";
 			// Extraire les identifiants des sommets de la face.
 			while (myline >> u) cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
-			cout << endl;
+			//cout << endl;
+			
 		}
 	}
-
+	clearTwinRelationships();
+	establishTwinRelationships();
 	// Vérifier la cohérence du maillage.
-	checkMesh();
+	checkMeshAdvanced();
 	// Normaliser les coordonnées des sommets.
+	checkHalfEdgeReferences();
 	normalize();
 
 	// Retourner true pour indiquer que la lecture a réussi.
 	return true;
 }
-
-
 
 void myMesh::computeNormals()
 {
@@ -183,7 +261,6 @@ void myMesh::computeNormals()
 		}
 	}
 }
-
 
 void myMesh::normalize()
 {
@@ -220,7 +297,6 @@ void myMesh::normalize()
 	}
 }
 
-
 void myMesh::splitFaceTRIS(myFace *f, myPoint3D *p)
 {
 	/**** TODO ****/
@@ -237,29 +313,73 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p)
 	/**** TODO ****/
 }
 
-
 void myMesh::subdivisionCatmullClark()
 {
 	/**** TODO ****/
 }
 
+void myMesh::clearTwinRelationships() {
+	for (auto& he : halfedges) {
+		if (he) {
+			he->twin = nullptr;
+		}
+	}
+}
+
+void myMesh::establishTwinRelationships() {
+	std::map<std::pair<int, int>, myHalfedge*> edgeMap;
+
+	for (auto& he : halfedges) {
+		if (he) {
+			std::pair<int, int> edgeKey(he->source->index, he->next->source->index);
+			std::pair<int, int> twinKey(he->next->source->index, he->source->index);
+
+			// Check if the twin is already in the map
+			if (edgeMap.count(twinKey)) {
+				// Establish the twin relationship
+				he->twin = edgeMap[twinKey];
+				edgeMap[twinKey]->twin = he;
+			}
+			else {
+				// Add the half-edge to the map for future twin finding
+				edgeMap[edgeKey] = he;
+			}
+		}
+	}
+}
 
 void myMesh::triangulate() {
 	
 	std::vector<myFace*> toRemove;
-	for (myFace* f : faces)
+	int faceNumber = faces.size();
+	cout << "number of faces (face.size()) : " << faces.size() << endl;
+	for (int i=0;i<faceNumber;i++)
 	{
-
+		//cout << "Starting triangulate " << i << "." << endl;
+		myFace* f  = faces[i];
 		if (triangulate(f)) {
 			toRemove.push_back(f);
 		}
+		//cout << "End of triangulate " << i << "." << endl;
 	}
 	for (int i = 0; i < toRemove.size(); i++)
 	{
 		faces.erase(remove(faces.begin(), faces.end(), toRemove[i]),faces.end());
 	}
 	std::cout << " Triangulated faces : " << faces.size() << endl;
+	
+	clearTwinRelationships();
 
+	//Re-establish twin relationships
+	establishTwinRelationships();
+	checkMeshAdvanced();
+	//checkHalfEdgeReferences();
+}
+
+void myMesh::testTriangulate()
+{
+	triangulate();
+	checkMeshAdvanced();
 	int triangles = 0;
 	int quads = 0;
 	int pentagons = 0;
@@ -294,44 +414,77 @@ void myMesh::triangulate() {
 	std::cout << "Hexagons: " << hexagons << std::endl;
 	std::cout << "Septagons: " << septagons << std::endl;
 	std::cout << "Octagons: " << octagons << std::endl;
-	checkMesh();
+}
+void myMesh::checkHalfEdgeReferences() {
+	cout << "Checking Half-Edge References..." << endl;
+	bool hasIssue = false;
+
+	for (auto& he : halfedges) {
+		if (!he) continue;  // Skip if the half-edge is null
+
+		// Check Next Reference
+		if (!he->next || he->next->source == he->source) {
+			cout << "Issue with Next Reference: Half-edge from " << he->source->index << " lacks a proper next reference." << endl;
+			hasIssue = true;
+		}
+
+		// Check Prev Reference
+		if (!he->prev || he->prev->next != he) {
+			cout << "Issue with Prev Reference: Half-edge from " << he->source->index << " lacks a proper prev reference." << endl;
+			hasIssue = true;
+		}
+
+		// Check Twin Reference
+		if (he->twin && (he->twin->twin != he || he->twin->source == he->source)) {
+			cout << "Issue with Twin Reference: Half-edge from " << he->source->index << " has an inconsistent twin." << endl;
+			hasIssue = true;
+		}
+	}
+
+	if (!hasIssue) {
+		cout << "All half-edge references are correct." << endl;
+	}
 }
 
 bool myMesh::triangulate(myFace* f) {
-	
+	//std::cout << "Starting triangulation function" << std::endl;
 	std::vector<myVertex*> faceVertices;
-	myHalfedge* startEdge = f->adjacent_halfedge;
-	myHalfedge* currentEdge = startEdge;
-	do { //Algorithme de parcours de face
+	std::map<std::pair<int, int>, myHalfedge*> edgeMap; // To track edges and their twins
+
+	myHalfedge* currentEdge = f->adjacent_halfedge;
+	do {
 		faceVertices.push_back(currentEdge->source);
+		std::pair<int, int> edgeKey(currentEdge->source->index, currentEdge->next->source->index);
+		edgeMap[edgeKey] = currentEdge;
 		currentEdge = currentEdge->next;
 	} while (currentEdge != f->adjacent_halfedge);
-	if (faceVertices.size() <= 3)return false;
-	// Calcul du centre de la face
-	myPoint3D center(0, 0, 0);
-	for (myVertex* v : faceVertices) {
-		center += *(v->point);
-	}
-	center /= faceVertices.size();
+	//std::cout << "Edges correctly mapped " << std::endl;
+	if (faceVertices.size() <= 3) return false;
 
-	// Création du nouveau sommet pour le centre
-	myVertex* centerVertex = new myVertex();
-	centerVertex->point = new myPoint3D(center.X, center.Y, center.Z);
-	vertices.push_back(centerVertex); // Ajoutez le nouveau sommet à la liste des sommets
+	myVertex* centerVertex = createCenterVertex(faceVertices);
+	std::vector<myHalfedge*> newHalfedges;
+	createTriangles(centerVertex, faceVertices, newHalfedges);
+	
+	
 
-	// Pour un polygone convexe, chaque paire consécutive de sommets avec le centre forme un triangle.
-	for (size_t i = 0; i < faceVertices.size() - 1; ++i) {
+	//std::cout << "checkMesh after triangulation of face " << std::endl;
+	//checkMeshAdvanced();
+	//std::cout << "Leaving the triangulate function "<< endl;
+	return true;
+}
+
+void myMesh::createTriangles(myVertex* centerVertex, const std::vector<myVertex*>& faceVertices, std::vector<myHalfedge*>& newHalfedges) {
+	for (size_t i = 0; i < faceVertices.size(); ++i) {
 		myVertex* A = centerVertex;
 		myVertex* B = faceVertices[i];
-		myVertex* C = faceVertices[i + 1];
+		myVertex* C = faceVertices[(i + 1) % faceVertices.size()];
 
-		// Créez un triangle avec les sommets A, B, et C
 		myFace* newTriangle = new myFace();
-
 		myHalfedge* AB = new myHalfedge();
 		myHalfedge* BC = new myHalfedge();
 		myHalfedge* CA = new myHalfedge();
 
+		// Setup half-edges and assign to newTriangle
 		AB->source = A;
 		BC->source = B;
 		CA->source = C;
@@ -349,124 +502,114 @@ bool myMesh::triangulate(myFace* f) {
 		CA->adjacent_face = newTriangle;
 
 		newTriangle->adjacent_halfedge = AB;
-		// Associer les twins
-		if (i > 0) { // Si ce n'est pas la première itération
-			myHalfedge* previousCA = halfedges.back(); // La dernière demi-arête ajoutée lors de l'itération précédente
-			previousCA->twin = AB;
-			AB->twin = previousCA;
 
-			myHalfedge* previousBC = halfedges[halfedges.size() - faceVertices.size() + i - 1];
-			previousBC->twin = CA;
-			CA->twin = previousBC;
-
-			if (i < faceVertices.size() - 2) { // If it's not the second last iteration
-				myHalfedge* nextBC = halfedges[halfedges.size() - faceVertices.size() + i + 1];
-				BC->twin = nextBC;
-				nextBC->twin = BC;
-			}
-
-		}
-		// Ajoutez le nouveau triangle à la liste des faces
+		// Add the new triangle to the face list
 		faces.push_back(newTriangle);
 
-		// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
+		// Add the new half-edges to the half-edge list
 		halfedges.push_back(AB);
 		halfedges.push_back(BC);
 		halfedges.push_back(CA);
-		
+
+		// Set originof for centerVertex
+		if (i == 0) {  // Set it only once
+			centerVertex->originof = AB;
+		}
+
+		// Store BC for twin assignment in a later step
+		newHalfedges.push_back(BC);
 	}
-	// Ajoutez le dernier triangle avec le dernier sommet et le centre
-	myVertex* A = centerVertex;
-	myVertex* B = faceVertices.back(); // Dernier sommet
-	myVertex* C = faceVertices.front(); // Premier sommet
-
-	myFace* newTriangle = new myFace();
-
-	myHalfedge* AB = new myHalfedge();
-	myHalfedge* BC = new myHalfedge();
-	myHalfedge* CA = new myHalfedge();
-
-	AB->source = A;
-	BC->source = B;
-	CA->source = C;
-
-	AB->next = BC;
-	BC->next = CA;
-	CA->next = AB;
-
-	AB->prev = CA;
-	BC->prev = AB;
-	CA->prev = BC;
-
-	AB->adjacent_face = newTriangle;
-	BC->adjacent_face = newTriangle;
-	CA->adjacent_face = newTriangle;
-
-	newTriangle->adjacent_halfedge = AB;
-
-	myHalfedge* firstAB = halfedges[halfedges.size() - 2 * faceVertices.size()]; // Le premier AB ajouté
-	myHalfedge* lastCA = halfedges.back(); // La dernière demi-arête ajoutée
-	firstAB->twin = lastCA;
-	lastCA->twin = firstAB;
-	// Ajoutez le dernier triangle à la liste des faces
-	faces.push_back(newTriangle);
-
-	// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
-	halfedges.push_back(AB);
-	//halfedges.push_back(BC);
-	halfedges.push_back(CA);
-	std::cout << "checkMesh after triangulation of face " << std::endl;
-	checkMesh();
-	return true;
 }
 
-//bool myMesh::triangulate(myFace* f) {
-//	std::vector<myVertex*> faceVertices;
-//	myHalfedge* startEdge = f->adjacent_halfedge;
-//	myHalfedge* currentEdge = startEdge;
-//	do { 
-//		faceVertices.push_back(currentEdge->source);
-//		currentEdge = currentEdge->next;
-//	} while (currentEdge != startEdge);
-//
-//	// Pour un polygone convexe, chaque triplet de sommets consécutifs forme une oreille.
-//	for (size_t i = 0; i < faceVertices.size() - 2; ++i) {
-//		myVertex* A = faceVertices[i];
-//		myVertex* B = faceVertices[i + 1];
-//		myVertex* C = faceVertices[i + 2];
-//
-//		myFace* newTriangle = new myFace();
-//
-//		myHalfedge* AB = new myHalfedge();
-//		myHalfedge* BC = new myHalfedge();
-//		myHalfedge* CA = new myHalfedge();
-//
-//		AB->source = A;
-//		BC->source = B;
-//		CA->source = C;
-//
-//		AB->next = BC;
-//		BC->next = CA;
-//		CA->next = AB;
-//
-//		AB->prev = CA;
-//		BC->prev = AB;
-//		CA->prev = BC;
-//
-//		AB->adjacent_face = newTriangle;
-//		BC->adjacent_face = newTriangle;
-//		CA->adjacent_face = newTriangle;
-//
-//		newTriangle->adjacent_halfedge = AB;
-//
-//		// Ajoutez le nouveau triangle à la liste des faces
-//		faces.push_back(newTriangle);
-//
-//		// Ajoutez les nouvelles demi-arêtes à la liste des demi-arêtes
-//		//halfedges.push_back(AB);
-//		halfedges.push_back(BC);
-//		halfedges.push_back(CA);
-//	}
-//
-//	return true;
-//}
+myVertex* myMesh::createCenterVertex(const std::vector<myVertex*>& faceVertices) {
+	myPoint3D center(0, 0, 0);
+	for (myVertex* v : faceVertices) {
+		center += *(v->point);
+	}
+	center /= faceVertices.size();
+
+	myVertex* centerVertex = new myVertex();
+	centerVertex->point = new myPoint3D(center.X, center.Y, center.Z);
+
+	// Assign the next available index to the new vertex
+	centerVertex->index = vertices.size();
+
+	vertices.push_back(centerVertex);
+
+	//cout << "Created Center Vertex with Index: " << centerVertex->index << endl;
+
+	return centerVertex;
+}
+
+void myMesh::testHalfEdgeProperties(std::vector<myHalfedge*>& halfedges) {
+	// Function to display half-edge properties
+	auto displayHalfEdgeProperties = [](myHalfedge* he) {
+		if (he && he->source && he->next && he->next->source) {
+			cout << "Half-edge from vertex he->source->index " << he->source->index << " to vertex he->next->source->index " << he->next->source->index;
+			if (he->twin) {
+				cout << " | Twin from vertex  he->twin->source->index " << he->twin->source->index << " to vertex he->twin->next->source->index " << he->twin->next->source->index;
+			}
+			else {
+				cout << " | No twin";
+			}
+			cout << endl;
+		}
+		};
+
+	cout << "Half-edges before twin assignment:" << endl;
+	for (auto& he : halfedges) {
+		displayHalfEdgeProperties(he);
+	}
+
+	// Correcting twin assignments
+	/*correctTwinAssignments(halfedges);*/
+
+	cout << "\nHalf-edges after twin assignment:" << endl;
+	for (auto& he : halfedges) {
+		displayHalfEdgeProperties(he);
+	}
+}
+
+void myMesh::displayHalfEdgeProperties(myHalfedge* he) {
+	if (!he) {
+		cout << "Half-edge is null." << endl;
+		return;
+	}
+
+	cout << "Half-edge properties: " << endl;
+
+	// Display source vertex
+	if (he->source) {
+		cout << "  Source Vertex: " << he->source->index << endl;
+	}
+	else {
+		cout << "  Source Vertex: null" << endl;
+	}
+
+	// Display destination vertex (next half-edge's source)
+	if (he->next && he->next->source) {
+		cout << "  Destination Vertex: " << he->next->source->index << endl;
+	}
+	else {
+		cout << "  Destination Vertex: null" << endl;
+	}
+
+	// Display twin's source and destination vertices
+	if (he->twin) {
+		if (he->twin->source) {
+			cout << "  Twin's Source Vertex: " << he->twin->source->index;
+		}
+		else {
+			cout << "  Twin's Source Vertex: null";
+		}
+		if (he->twin->next && he->twin->next->source) {
+			cout << ", Twin's Destination Vertex: " << he->twin->next->source->index << endl;
+		}
+		else {
+			cout << ", Twin's Destination Vertex: null" << endl;
+		}
+	}
+	else {
+		cout << "  No twin for this half-edge." << endl;
+	}
+}

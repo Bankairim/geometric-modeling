@@ -1,9 +1,4 @@
 ﻿  main.cpp
-  myFace.cpp
-  myHalfedge.cpp
-  myMesh.cpp
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(9,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'myFace.h' : No such file or directory
-  myVertex.cpp
-  myPoint3D.cpp
-  myVector3D.cpp
-  Génération de code en cours...
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(265,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(266,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+  myproj.vcxproj -> C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\Debug\myproj.exe
