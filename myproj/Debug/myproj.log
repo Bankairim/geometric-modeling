@@ -1,4 +1,4 @@
 ﻿  main.cpp
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(265,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(266,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(285,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(286,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
   myproj.vcxproj -> C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\Debug\myproj.exe

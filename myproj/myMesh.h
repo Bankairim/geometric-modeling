@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 
 class myMesh
@@ -22,6 +23,7 @@ public:
 
 	void checkMesh();
 	bool checkMeshAdvanced();
+	void myMesh::checkVertice(myVertex* v);
 	// Assuming 'myMesh mesh' and 'std::vector<myHalfedge*> halfedges' are already defined
 	void myMesh::testHalfEdgeProperties(std::vector<myHalfedge*>& halfedges);
 	void myMesh::displayHalfEdgeProperties(myHalfedge* he);
@@ -53,5 +55,18 @@ public:
 
 	myMesh(void);
 	~myMesh(void);
-};
 
+	//For simplification
+	//void allCollapse(double d);
+	//bool myMesh::collapse(myHalfedge* e, std::vector<myFace*>& facesToDelete, std::vector<myHalfedge*>& halfedgesToDelete, std::vector<myVertex*>& verticesToDelete);
+	bool myMesh::collapse(myHalfedge* e);
+	bool myMesh::collapse();
+	//void myMesh::collapse(myHalfedge* e);
+	//double distance(myPoint3D* p1, myPoint3D* p2);
+	myPoint3D* bestPosition(myPoint3D* p1, myPoint3D* p2);
+	//bool checkTriangulate(myFace* f);
+	myHalfedge* findMinimalHalfedge();
+	void myMesh::displayAllHalfEdgeProperties();
+	void myMesh::allCollapse(double d);
+
+};

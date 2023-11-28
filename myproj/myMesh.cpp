@@ -2,10 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <map>
+#include <utility>
 #include <GL/glew.h>
 #include "myvector3d.h"
-#include "myFace.h"
-
+#include <vector>
+#include <algorithm>
 using namespace std;
 
 myMesh::myMesh(void) {
@@ -110,13 +112,55 @@ bool myMesh::checkMeshAdvanced()
 	return isMeshValid;
 }
 
+void myMesh::checkVertice(myVertex* v) {
+	if (!v) {
+		std::cout << "Le vertex est NULL." << std::endl;
+		return;
+	}
+
+	if (!v->originof) {
+		std::cout << "Vertex " << v->index << ": originof est NULL." << std::endl;
+		return;
+	}
+
+	myHalfedge* start = v->originof;
+	myHalfedge* current = start;
+	int maxIterations = 2000;
+	int iteration = 0;
+
+	do {
+		if (!current) {
+			std::cout << "Vertex " << v->index << ": Demi-arête actuelle est NULL." << std::endl;
+			break;
+		}
+
+		if (!current->twin) {
+			std::cout << "Vertex " << v->index << ": Demi-arête n'a pas de jumeau." << std::endl;
+		}
+		else if (current->twin->twin != current) {
+			std::cout << "Vertex " << v->index << ": Inconsistance de jumeau detectee." << std::endl;
+		}
+
+		if (!current->adjacent_face) {
+			std::cout << "Vertex " << v->index << ": Pas de face adjacente à la demi-arête actuelle." << std::endl;
+		}
+
+		current = current->twin ? current->twin->next : nullptr;
+		iteration++;
+		if (iteration >= maxIterations) {
+			std::cout << "Vertex " << v->index << ": Attention, dépassement du nombre maximum d'itérations dans checkVertice()." << std::endl;
+			break;
+		}
+	} while (current && current != start);
+}
+
 // Fonction pour lire un fichier .obj et stocker ses données dans la structure halfedge.
 bool myMesh::readFile(std::string filename)
 {
 	// Déclaration de variables pour stocker les lignes du fichier, les types d'éléments (comme "v" pour les sommets ou "f" pour les faces) et les données temporaires.
 	string s, t, u;
 	vector<int> faceids; // Pour stocker les identifiants des sommets des faces.
-	myHalfedge** hedges; // Pointeur vers un tableau de halfedges.
+	myHalfedge** hedges; // Pointeur vers le tableau de halfedges.
 
 	// Ouvrir le fichier .obj pour la lecture.
 	ifstream fin(filename);
@@ -131,7 +175,7 @@ bool myMesh::readFile(std::string filename)
 	// Créer une map pour stocker les halfedges et leurs jumeaux (twins).
 	map<pair<int, int>, myHalfedge*> twin_map; 
 	map<pair<int, int>, myHalfedge*>::iterator it;
-
+	int verticeNumber = 0;
 	// Lire le fichier ligne par ligne.
 	while (getline(fin, s))
 	{
@@ -148,7 +192,7 @@ bool myMesh::readFile(std::string filename)
 			// Extraire les coordonnées x, y et z du sommet.
 			myline >> x >> y >> z;
 			// Afficher les coordonnées pour le débogage.
-			cout << "v " << x << " " << y << " " << z << endl;
+			cout << "v " << x << " " << y << " " << z << " index : " << verticeNumber << endl;
 			myPoint3D* Pt = new myPoint3D(x, y, z);
 			myVertex* v = new myVertex();
 			v->point = Pt;
@@ -156,8 +200,7 @@ bool myMesh::readFile(std::string filename)
 			// 23/11:2023 : Set the index of the vertex
 			v->index = vertices.size();
 			vertices.push_back(v);
-			/*for (int i = 0; i < vertices.size(); i++)
-				std::cout << "vertices[" << i << "] = " << vertices[i]->index << endl;*/
+			verticeNumber++;
 		}
 		else if (t == "mtllib") {}
 
@@ -186,6 +229,7 @@ bool myMesh::readFile(std::string filename)
 				
 
 			myFace* f = new myFace(); // allocate the new face
+			f->index = faces.size();
 			f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
 			
 
@@ -200,7 +244,8 @@ bool myMesh::readFile(std::string filename)
 				hedges[i]->next = hedges[iplusone];
 				hedges[i]->prev = hedges[iminusone];
 				hedges[i]->adjacent_face = f;
-
+				//set index. 
+				hedges[i]->index = i;
 
 				//// search for the twins using twin_map
 				//pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
@@ -232,6 +277,7 @@ bool myMesh::readFile(std::string filename)
 			
 		}
 	}
+	cout << " Readfile terminé. Vertices size : " << vertices.size() << endl;
 	clearTwinRelationships();
 	establishTwinRelationships();
 	// Vérifier la cohérence du maillage.
@@ -254,10 +300,13 @@ void myMesh::computeNormals()
 	// Vérifier si 'vertices' est non vide avant d'appeler computeNormal
 	if (!vertices.empty()) {
 		// Parcourir tous les sommets et calculer leurs normales
-		for (myVertex* v : vertices)
+		cout << "Vertices size : " << vertices.size() << endl;
+		for (int i=0;i < vertices.size();i++)
 		{
 			//A ce stade la, v est censé avoir un point et un originof du readfile et va obtenir une normal basée sur son originof.
-			if (v) v->computeNormal();
+			//cout << "vertices[" << i << "] " << endl;
+			//checkVertice(vertices[i]);
+			if (vertices[i]) vertices[i]->computeNormal();
 		}
 	}
 }
@@ -329,23 +378,26 @@ void myMesh::clearTwinRelationships() {
 void myMesh::establishTwinRelationships() {
 	std::map<std::pair<int, int>, myHalfedge*> edgeMap;
 
-	for (auto& he : halfedges) {
-		if (he) {
-			std::pair<int, int> edgeKey(he->source->index, he->next->source->index);
-			std::pair<int, int> twinKey(he->next->source->index, he->source->index);
+	for (std::size_t i = 0;i<halfedges.size();i++) {
+		if (halfedges[i]) {
+			std::pair<int, int> edgeKey(halfedges[i]->source->index, halfedges[i]->next->source->index);
+			std::pair<int, int> twinKey(halfedges[i]->next->source->index, halfedges[i]->source->index);
 
 			// Check if the twin is already in the map
 			if (edgeMap.count(twinKey)) {
+				//cout << "Twin déjà existant" << endl;
 				// Establish the twin relationship
-				he->twin = edgeMap[twinKey];
-				edgeMap[twinKey]->twin = he;
+				halfedges[i]->twin = edgeMap[twinKey];
+				edgeMap[twinKey]->twin = halfedges[i];
 			}
 			else {
 				// Add the half-edge to the map for future twin finding
-				edgeMap[edgeKey] = he;
+				edgeMap[edgeKey] = halfedges[i];
 			}
 		}
 	}
+
+	// search for the twins using twin_map
 }
 
 void myMesh::triangulate() {
@@ -369,17 +421,15 @@ void myMesh::triangulate() {
 	std::cout << " Triangulated faces : " << faces.size() << endl;
 	
 	clearTwinRelationships();
-
-	//Re-establish twin relationships
 	establishTwinRelationships();
-	checkMeshAdvanced();
+	//checkMeshAdvanced();
 	//checkHalfEdgeReferences();
 }
 
 void myMesh::testTriangulate()
 {
-	triangulate();
-	checkMeshAdvanced();
+	//triangulate();
+	//checkMeshAdvanced();
 	int triangles = 0;
 	int quads = 0;
 	int pentagons = 0;
@@ -612,4 +662,166 @@ void myMesh::displayHalfEdgeProperties(myHalfedge* he) {
 	else {
 		cout << "  No twin for this half-edge." << endl;
 	}
+}
+
+
+bool checkTriangulate(myFace* f) {
+	myHalfedge* startEdge = f->adjacent_halfedge;
+	myHalfedge* currentEdge = startEdge;
+	int count = 0;//Number of halfedges
+	do {
+		count++;
+		currentEdge = currentEdge->next;
+	} while (currentEdge != startEdge);
+
+	return(count == 3);
+}
+
+myPoint3D* myMesh::bestPosition(myPoint3D* p1, myPoint3D* p2) {
+	return new myPoint3D((p1->X + p2->X) / 2.0, (p1->Y + p2->Y) / 2.0, (p1->Z + p2->Z) / 2.0);
+}
+
+double distance(myPoint3D* p1, myPoint3D* p2) {
+	//first thought, find the middle of v1 and v2
+	//cout << "passe distance";
+	return  sqrt(pow(p2->X - p1->X, 2) + pow(p2->Y - p1->Y, 2) + pow(p2->Z - p1->Z, 2));
+}
+
+myHalfedge* myMesh::findMinimalHalfedge() {
+	if (halfedges.empty()) {
+		return nullptr; // No halfedge in the mesh
+	}
+	double min = std::numeric_limits<double>::max();
+	myHalfedge* minEdge = nullptr;
+
+	for (myHalfedge* he : halfedges) {
+		if (he && he->source && he->next && he->next->source) {
+			double currentDistance = distance(he->source->point, he->next->source->point);
+			if (currentDistance < min) {
+				min = currentDistance;
+				minEdge = he;
+			}
+		}
+	}
+	//std::cout << "MinimalHalfedge = " << minEdge->index << ". " << endl;
+
+	return minEdge;
+}
+
+
+
+void myMesh::displayAllHalfEdgeProperties() {
+	for (auto& he : halfedges) {
+		if (he) {
+			he->displayProperties();
+		}
+	}
+}
+
+
+
+bool myMesh::collapse(myHalfedge* e) {
+	//myHalfedge* e = findMinimalHalfedge();
+	if (!e || !e->twin) return false; // Vérifier la présence de l'halfedge et de son jumeau
+	myVertex* newVertex = new myVertex();
+	myVertex* v1 = new myVertex();
+	myVertex* v2 = new myVertex();
+	v1 = e->source;
+	v2 = e->next->source;
+	newVertex->point = bestPosition(v1->point, v2->point);
+	vertices.push_back(newVertex);
+	vector<myFace*> deleteFaces;
+	vector<myHalfedge*>deleteHalfedge;
+
+	for each (myHalfedge * he in halfedges)
+	{
+		//Find the two faces connected with halfedge;
+		if (he == e || he == e->twin) {
+			if (checkTriangulate(he->adjacent_face)) {
+				he->next->twin->twin = he->prev->twin;
+				deleteFaces.push_back(he->adjacent_face);
+				deleteHalfedge.push_back(he->next);
+				deleteHalfedge.push_back(he->prev);
+				deleteHalfedge.push_back(he);
+			}
+			else {
+				he->next->prev = he->prev;
+				he->prev->next = he->next;
+				deleteHalfedge.push_back(he);
+			}
+		}
+		if (he->source == v1 || he->source == v2) {
+			he->source = newVertex;
+			newVertex->originof = he;
+		}
+	}
+	for each (myFace * f in faces) {
+		if (f->adjacent_halfedge == e) {
+			f->adjacent_halfedge = e->next;
+		}
+	}
+	// Effacer v1 si présent
+	auto itV1 = std::remove(vertices.begin(), vertices.end(), v1);
+	if (itV1 != vertices.end()) {
+		vertices.erase(itV1, vertices.end());
+	}
+
+	// Effacer v2 si présent
+	auto itV2 = std::remove(vertices.begin(), vertices.end(), v2);
+	if (itV2 != vertices.end()) {
+		vertices.erase(itV2, vertices.end());
+	}
+
+
+
+	for (int m = 0; m < deleteHalfedge.size(); m++) {
+		halfedges.erase(remove(halfedges.begin(), halfedges.end(), deleteHalfedge[m]));
+	}
+	if (deleteFaces.size() != 0) {
+		for (int j = 0; j < deleteFaces.size(); j++) {
+			faces.erase(remove(faces.begin(), faces.end(), deleteFaces[j]));
+		}
+	}
+	computeNormals();
+	return true;
+}
+
+bool myMesh::collapse()
+{
+	myHalfedge* e = findMinimalHalfedge();
+	return(collapse(e));
+}
+
+void myMesh::allCollapse(double d) {
+	bool collapsed = true; // Flag pour vérifier si au moins un effondrement a eu lieu
+	while (collapsed) {
+		collapsed = false; // Réinitialiser le flag pour la prochaine itération
+		std::vector<myHalfedge*> edgesToCollapse; // Stocker les halfedges à effondrer
+
+		// Identifier les halfedges éligibles pour l'effondrement
+		for (myHalfedge* he : halfedges) {
+			if (distance(he->source->point, he->twin->source->point) <= d) {
+				edgesToCollapse.push_back(he);
+			}
+		}
+
+		// Effondrer les halfedges identifiés
+		for (myHalfedge* he : edgesToCollapse) {
+			if (collapse(he)) {
+				collapsed = true; // Si collapse a réussi, mettre le flag à vrai
+				// Note: collapse doit mettre à jour les structures halfedges et vertices
+			}
+		}
+
+		// Optionnel: recalculer les distances ou la mesure d'erreur après chaque effondrement
+		// ...
+
+		// S'arrêter si aucun effondrement n'a eu lieu durant cette itération
+		if (!collapsed) {
+			break;
+		}
+	}
+
+	// Recalculer les normales après la simplification
+	computeNormals();
 }

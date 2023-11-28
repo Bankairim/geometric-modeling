@@ -18,7 +18,10 @@ myVertex::~myVertex(void)
 
 void myVertex::computeNormal()
 {
-    if (!originof) return; // Si aucune halfedge d'origine, retournez.
+    if (!originof) {
+        std::cout << "Vertex " << index << ": originof est NULL" << std::endl;
+        return;
+    }
 
     myVector3D accumulatedNormal(0.0, 0.0, 0.0);
     int faceCount = 0;
@@ -39,6 +42,11 @@ void myVertex::computeNormal()
             accumulatedNormal += *(current->adjacent_face->normal); // Utilisez l'opérateur d'addition surchargé de myVector3D
             faceCount++;
         }
+        else
+        {
+            std::cout << "Pas de current ou de face adjacente  disponible." << std::endl;
+        }
+        
 
         if (current && current->twin) {
             current = current->twin->next;
@@ -64,7 +72,7 @@ void myVertex::computeNormal()
     accumulatedNormal.normalize();
 
     // Mettez à jour la normale du sommet
-    *normal = accumulatedNormal; // Assurez-vous que "normal" est bien un pointeur vers myVector3D
+    *normal = accumulatedNormal;
 }
 
 

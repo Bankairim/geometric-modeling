@@ -43,9 +43,29 @@ void menu(int item)
 {
 	switch(item)
 	{
+
+	case MENU_SIMPLIFY:
+	{
+		cout << endl << "Simplification loading ...";
+
+		//for dolphin 0.04
+		//for sphere 0.06
+		//m->allCollapse(0.1);
+		//m->collapse(m->findMinimalHalfedge());
+		m->collapse();
+		//m->halfedges.pop_back();
+		//for (int i = 0;i <( m->halfedges.size() / 2);i++) {
+		//    cout << m->findMinimalDistance() << endl;
+		//    m->allCollapse(m->findMinimalDistance());
+		//}
+		makeBuffers(m);
+		cout << " Simplify success." << endl;
+		break;
+	}
 	case MENU_TRIANGULATE:
 		{
 			m->triangulate();
+			//m->testTriangulate();
 			m->computeNormals();
 			makeBuffers(m);
 			break;
@@ -383,7 +403,7 @@ void initMesh()
 	closest_face = NULL;
 
 	m = new myMesh();
-	if (m->readFile("dolphin.obj")) {
+	if (m->readFile("cube.obj")) {
 		m->computeNormals();
 		makeBuffers(m);
 	}

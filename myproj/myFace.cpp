@@ -13,8 +13,63 @@ myFace::myFace(void)
 
 myFace::~myFace(void)
 {
-	if (normal) delete normal;
+	if (normal)
+	{
+		delete normal;
+		normal = nullptr;
+	}
 }
+myFace& myFace::operator=(const myFace& other) {
+    // Protection contre l'auto-affectation
+    if (this == &other) {
+        return *this;
+    }
+
+    // Copiez la halfedge adjacente (assurez-vous que c'est une copie superficielle ou profonde selon vos besoins)
+    this->adjacent_halfedge = other.adjacent_halfedge;
+
+    // Copiez la normale (créez un nouvel objet myVector3D pour éviter le partage de la mémoire)
+    if (other.normal) {
+        if (this->normal) {
+            *this->normal = *other.normal;
+        }
+        else {
+            this->normal = new myVector3D(*other.normal);
+        }
+    }
+    else {
+        if (this->normal) {
+            delete this->normal;
+            this->normal = nullptr;
+        }
+    }
+
+    // Retourne la référence à cet objet
+    return *this;
+}
+
+bool myFace::isDegenerate() {
+    if (!adjacent_halfedge) return true; // Si aucune halfedge adjacente, la face est considérée comme dégénérée
+
+    myHalfedge* start = adjacent_halfedge;
+    myHalfedge* current = start;
+    int count = 0;
+
+    // Parcourir les halfedges de la face pour compter le nombre de sommets uniques
+    do {
+        // Ajouter une vérification pour s'assurer que 'current' et 'current->next' ne sont pas nuls
+        if (!current || !current->next) {
+            return true; // Si 'current' ou 'current->next' est nul, la face est considérée comme dégénérée
+        }
+        count++;
+        current = current->next;
+    } while (current && current != start && count <= 3); // Arrêter si on revient au départ ou si on a compté plus que 3 halfedges
+
+    // Si on a moins de 3 sommets uniques, la face est dégénérée
+    return count < 3;
+}
+
+
 
 void myFace::computeNormal()
 {
