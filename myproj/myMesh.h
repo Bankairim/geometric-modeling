@@ -72,5 +72,5 @@ public:
 	// For subdivision
 	void myMesh::subdivisionCatmullClark();
 	myVertex* myMesh::computeFacePoints(myFace* f);
-	myPoint3D* myMesh::averageOfFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2);
+	myPoint3D* myMesh::averageforFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2);
 };

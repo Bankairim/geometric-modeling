@@ -675,7 +675,7 @@ myPoint3D* myMesh::bestPosition(myPoint3D* p1, myPoint3D* p2) {
 	return new myPoint3D((p1->X + p2->X) / 2.0, (p1->Y + p2->Y) / 2.0, (p1->Z + p2->Z) / 2.0);
 }
 // Fonction pour calculer la moyenne de quatre points
-myPoint3D* myMesh::averageOfFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2) {
+myPoint3D* myMesh::averageforFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2) {
 	return new myPoint3D((p1->X + p2->X + f1->X + f2->X) / 4.0,
 		(p1->Y + p2->Y + f1->Y + f2->Y) / 4.0,
 		(p1->Z + p2->Z + f1->Z + f2->Z) / 4.0);
@@ -786,6 +786,7 @@ bool myMesh::collapse(myHalfedge* e) {
 
 bool myMesh::collapse()
 {
+	
 	myHalfedge* e = findMinimalHalfedge();
 	return(collapse(e));
 }

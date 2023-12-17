@@ -48,16 +48,7 @@ void menu(int item)
 	{
 		cout << endl << "Simplification loading ...";
 
-		//for dolphin 0.04
-		//for sphere 0.06
-		//m->allCollapse(0.1);
-		//m->collapse(m->findMinimalHalfedge());
 		m->collapse();
-		//m->halfedges.pop_back();
-		//for (int i = 0;i <( m->halfedges.size() / 2);i++) {
-		//    cout << m->findMinimalDistance() << endl;
-		//    m->allCollapse(m->findMinimalDistance());
-		//}
 		makeBuffers(m);
 		cout << " Simplify success." << endl;
 		break;

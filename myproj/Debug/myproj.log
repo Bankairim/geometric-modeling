@@ -1,10 +1,13 @@
 ﻿  main.cpp
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(285,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(286,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(291,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(292,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
   myMesh.cpp
 C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(293,18): warning C4018: '<' : incompatibilité signed/unsigned
 C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(473,20): warning C4018: '<' : incompatibilité signed/unsigned
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(782,20): warning C4018: '<' : incompatibilité signed/unsigned
-C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(786,21): warning C4018: '<' : incompatibilité signed/unsigned
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(775,20): warning C4018: '<' : incompatibilité signed/unsigned
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(779,21): warning C4018: '<' : incompatibilité signed/unsigned
   Génération de code en cours...
+LINK : warning LNK4217: le symbole '_sprintf_s' défini dans 'MSVCRTD.lib(error.obj)' est importé par 'nfd.lib(nfd_win.obj)' dans la fonction '"int __cdecl AppendExtensionToSpecBuf(char const *,char *,unsigned int)" (?AppendExtensionToSpecBuf@@YAHPBDPADI@Z)'
+nfd.lib(nfd_common.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'nfd.lib(nfd_common.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
+nfd.lib(nfd_win.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'nfd.lib(nfd_win.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
   myproj.vcxproj -> C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\Debug\myproj.exe
