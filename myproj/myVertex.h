@@ -14,7 +14,9 @@ public:
 
 	myVector3D *normal;
 
+
 	void computeNormal();
 	myVertex(void);
+	myVertex::myVertex(myPoint3D* pt);
 	~myVertex(void);
 };

@@ -247,16 +247,16 @@ bool myMesh::readFile(std::string filename)
 				//set index. 
 				hedges[i]->index = i;
 
-				//// search for the twins using twin_map
-				//pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
-				//it = twin_map.find(edgeKey);
-				//if (it != twin_map.end()) {
-				//	hedges[i]->twin = it->second;
-				//	it->second->twin = hedges[i];
-				//}
-				//else {
-				//	twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
-				//}
+				// search for the twins using twin_map
+				pair<int, int> edgeKey = make_pair(faceids[iplusone], faceids[i]);
+				it = twin_map.find(edgeKey);
+				if (it != twin_map.end()) {
+					hedges[i]->twin = it->second;
+					it->second->twin = hedges[i];
+				}
+				else {
+					twin_map[make_pair(faceids[i], faceids[iplusone])] = hedges[i];
+				}
 
 				// set originof
 				vertices[faceids[i]]->originof = hedges[i];
@@ -278,12 +278,12 @@ bool myMesh::readFile(std::string filename)
 		}
 	}
 	cout << " Readfile terminé. Vertices size : " << vertices.size() << endl;
-	clearTwinRelationships();
-	establishTwinRelationships();
+	//clearTwinRelationships();
+	//establishTwinRelationships();
 	// Vérifier la cohérence du maillage.
-	checkMeshAdvanced();
+	//checkMeshAdvanced();
 	// Normaliser les coordonnées des sommets.
-	checkHalfEdgeReferences();
+	//checkHalfEdgeReferences();
 	normalize();
 
 	// Retourner true pour indiquer que la lecture a réussi.
@@ -362,10 +362,6 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p)
 	/**** TODO ****/
 }
 
-void myMesh::subdivisionCatmullClark()
-{
-	/**** TODO ****/
-}
 
 void myMesh::clearTwinRelationships() {
 	for (auto& he : halfedges) {
@@ -400,31 +396,7 @@ void myMesh::establishTwinRelationships() {
 	// search for the twins using twin_map
 }
 
-void myMesh::triangulate() {
-	
-	std::vector<myFace*> toRemove;
-	int faceNumber = faces.size();
-	cout << "number of faces (face.size()) : " << faces.size() << endl;
-	for (int i=0;i<faceNumber;i++)
-	{
-		//cout << "Starting triangulate " << i << "." << endl;
-		myFace* f  = faces[i];
-		if (triangulate(f)) {
-			toRemove.push_back(f);
-		}
-		//cout << "End of triangulate " << i << "." << endl;
-	}
-	for (int i = 0; i < toRemove.size(); i++)
-	{
-		faces.erase(remove(faces.begin(), faces.end(), toRemove[i]),faces.end());
-	}
-	std::cout << " Triangulated faces : " << faces.size() << endl;
-	
-	clearTwinRelationships();
-	establishTwinRelationships();
-	//checkMeshAdvanced();
-	//checkHalfEdgeReferences();
-}
+
 
 void myMesh::testTriangulate()
 {
@@ -496,6 +468,31 @@ void myMesh::checkHalfEdgeReferences() {
 	}
 }
 
+void myMesh::triangulate() {
+
+	std::vector<myFace*> toRemove;
+	int faceNumber = faces.size();
+	cout << "number of faces (face.size()) : " << faces.size() << endl;
+	for (int i = 0; i < faceNumber; i++)
+	{
+		//cout << "Starting triangulate " << i << "." << endl;
+		myFace* f = faces[i];
+		if (triangulate(f)) {
+			toRemove.push_back(f);
+		}
+		//cout << "End of triangulate " << i << "." << endl;
+	}
+	for (int i = 0; i < toRemove.size(); i++)
+	{
+		faces.erase(remove(faces.begin(), faces.end(), toRemove[i]), faces.end());
+	}
+	std::cout << " Triangulated faces : " << faces.size() << endl;
+
+	clearTwinRelationships();
+	establishTwinRelationships();
+	//checkMeshAdvanced();
+	//checkHalfEdgeReferences();
+}
 bool myMesh::triangulate(myFace* f) {
 	//std::cout << "Starting triangulation function" << std::endl;
 	std::vector<myVertex*> faceVertices;
@@ -680,6 +677,12 @@ bool checkTriangulate(myFace* f) {
 myPoint3D* myMesh::bestPosition(myPoint3D* p1, myPoint3D* p2) {
 	return new myPoint3D((p1->X + p2->X) / 2.0, (p1->Y + p2->Y) / 2.0, (p1->Z + p2->Z) / 2.0);
 }
+// Fonction pour calculer la moyenne de quatre points
+myPoint3D* myMesh::averageOfFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2) {
+	return new myPoint3D((p1->X + p2->X + f1->X + f2->X) / 4.0,
+		(p1->Y + p2->Y + f1->Y + f2->Y) / 4.0,
+		(p1->Z + p2->Z + f1->Z + f2->Z) / 4.0);
+}
 
 double distance(myPoint3D* p1, myPoint3D* p2) {
 	//first thought, find the middle of v1 and v2
@@ -792,36 +795,197 @@ bool myMesh::collapse()
 	return(collapse(e));
 }
 
-void myMesh::allCollapse(double d) {
-	bool collapsed = true; // Flag pour vérifier si au moins un effondrement a eu lieu
-	while (collapsed) {
-		collapsed = false; // Réinitialiser le flag pour la prochaine itération
-		std::vector<myHalfedge*> edgesToCollapse; // Stocker les halfedges à effondrer
+myVertex* myMesh::computeFacePoints(myFace* f) {
+	// Étape 1 : ajoute un point pour chaque face.
+	myVertex* facePt = new myVertex();
+	facePt->point = new myPoint3D();
+	myPoint3D sum;
+	int vertexCount = 0;
 
-		// Identifier les halfedges éligibles pour l'effondrement
-		for (myHalfedge* he : halfedges) {
-			if (distance(he->source->point, he->twin->source->point) <= d) {
-				edgesToCollapse.push_back(he);
+	myHalfedge* start = f->adjacent_halfedge;
+	myHalfedge* current = start;
+	do {
+		*(facePt->point) += *(current->source->point);
+		vertexCount++;
+		current = current->next;
+	} while (current != start);
+
+	if (vertexCount > 0) {
+		*(facePt->point) /= vertexCount;
+	}
+	return facePt;
+}
+
+
+void myMesh::subdivisionCatmullClark() { 
+	for (myFace* f : faces) {
+		f->facePoint = computeFacePoints(f); // Utilise l'attribut facePoint
+	}
+	//// Étape 2: Pour chaque arête, ajouter un point d'arête.
+	//std::map<std::pair<myVertex*, myVertex*>, myPoint3D> edgePoints;
+	for (myHalfedge* he : halfedges) {
+		if (he->edgePoint == nullptr && he->twin->edgePoint == nullptr) {
+			he->edgePoint = new myVertex(); // Utilise l'attribut edgePoint
+			he->edgePoint->point = new myPoint3D();
+
+			// Deux extrémités (M, E) de l'arête
+			myPoint3D M = *(he->source->point);
+			myPoint3D E = *(he->twin->source->point);
+
+			if (he->adjacent_face && he->twin->adjacent_face) {
+				// Points de face des faces adjacentes
+				myPoint3D A = *(he->adjacent_face->facePoint->point); // Utilise l'attribut facePoint de myFace
+				myPoint3D F = *(he->twin->adjacent_face->facePoint->point);
+
+				*(he->edgePoint->point) = (A + F + M + E) / 4;
 			}
-		}
 
-		// Effondrer les halfedges identifiés
-		for (myHalfedge* he : edgesToCollapse) {
-			if (collapse(he)) {
-				collapsed = true; // Si collapse a réussi, mettre le flag à vrai
-				// Note: collapse doit mettre à jour les structures halfedges et vertices
-			}
-		}
-
-		// Optionnel: recalculer les distances ou la mesure d'erreur après chaque effondrement
-		// ...
-
-		// S'arrêter si aucun effondrement n'a eu lieu durant cette itération
-		if (!collapsed) {
-			break;
+			he->twin->edgePoint = he->edgePoint; // Duplique le point pour l'arête jumelle
 		}
 	}
 
-	// Recalculer les normales après la simplification
-	computeNormals();
+	// Mise à jour de chaque point original (P)
+	for (myVertex* v : vertices) {
+		myPoint3D* originalPos = new myPoint3D(*(v->point));
+		myPoint3D* faceAverage = new myPoint3D(); // Moyenne de tous les points de face pour les faces touchant P
+		myPoint3D* edgeAverage = new myPoint3D(); // Moyenne de tous les milieux d'arête pour les arêtes originales touchant P
+
+		int n = 0; // Nombre de faces adjacentes et aussi d'arêtes voisines de P
+
+		myHalfedge* startEdge = v->originof;
+		myHalfedge* currentEdge = startEdge;
+
+		do {
+			// Ajoute la position du point de face
+			*faceAverage += *(currentEdge->adjacent_face->facePoint->point);
+
+			// Ajoute la position du point d'arête
+			if (currentEdge->edgePoint != nullptr) {
+				*edgeAverage += *(currentEdge->edgePoint->point);
+			}
+
+			n++;
+
+			currentEdge = currentEdge->twin->next;
+		} while (currentEdge != startEdge);
+
+		if (n > 0) {
+			*faceAverage /= n;
+			*edgeAverage /= n;
+		}
+
+		// Calculer la nouvelle position
+		if (n > 3) {
+			*(v->point) = ((*faceAverage) + (*edgeAverage) * 2 + (*originalPos) * (n - 3)) / n;
+		}
+		else if (n > 0) {
+			// Gestion des cas où n est inférieur à 4
+			*(v->point) = ((*faceAverage) + (*edgeAverage) * 2) / n;
+		}
+
+		delete originalPos;
+	}
+
+	std::vector<myFace*> newFaces;
+	std::vector<myHalfedge*> newHalfedges;
+	std::vector<myVertex*> newVertices;
+
+	// Lambda function to add a vertex if it's not already in the vector
+	auto addVertexIfNotExists = [&](myVertex* vertex) {
+		if (std::find(newVertices.begin(), newVertices.end(), vertex) == newVertices.end()) {
+			newVertices.push_back(vertex);
+		}
+		};
+
+	// Form edges and faces in the new mesh
+	for (myFace* oldFace : faces) {
+		myHalfedge* startEdge = oldFace->adjacent_halfedge;
+		myHalfedge* currentEdge = startEdge;
+
+		do {
+			myFace* newFace = new myFace();
+
+			myHalfedge* edge1 = new myHalfedge();
+			myHalfedge* edge2 = new myHalfedge();
+			myHalfedge* edge3 = new myHalfedge();
+			myHalfedge* edge4 = new myHalfedge();
+
+			// Set the new vertices
+			myVertex* updatedVertex = currentEdge->source;
+			myVertex* edgePoint1 = currentEdge->edgePoint; // Utilise l'attribut edgePoint
+			myVertex* facePoint = oldFace->facePoint; // Utilise l'attribut facePoint
+			myVertex* edgePoint2 = currentEdge->prev->edgePoint; // Utilise l'attribut edgePoint
+
+			// Connect the new half-edges
+			edge1->source = updatedVertex;
+			edge1->next = edge2;
+			edge1->prev = edge4;
+			edge1->adjacent_face = newFace;
+			newFace->adjacent_halfedge = edge1;
+			edge1->source->originof = edge1;
+			
+			edge2->source = edgePoint1;
+			edge2->next = edge3;
+			edge2->prev = edge1;
+			edge2->adjacent_face = newFace;
+
+			edge3->source = facePoint;
+			edge3->next = edge4;
+			edge3->prev = edge2;
+			edge3->adjacent_face = newFace;
+			edge3->source->originof = edge3;
+
+			edge4->source = edgePoint2;
+			edge4->next = edge1;
+			edge4->prev = edge3;
+			edge4->adjacent_face = newFace;
+			edge4->source->originof = edge4;
+			edgePoint2->originof = edge4;
+			
+			
+			
+			newFaces.push_back(newFace);
+			newHalfedges.insert(newHalfedges.end(), { edge1, edge2, edge3, edge4 });
+
+			addVertexIfNotExists(updatedVertex);
+			addVertexIfNotExists(edgePoint1);
+			addVertexIfNotExists(facePoint);
+			addVertexIfNotExists(edgePoint2);
+
+			currentEdge = currentEdge->next;
+		} while (currentEdge != startEdge);
+	}
+	// Assignation du jumeau pour chaque nouvelle demi-arête
+	for (myHalfedge* newEdge : newHalfedges) {
+		for (myHalfedge* potentialTwin : newHalfedges) {
+			if (newEdge->source == potentialTwin->next->source && newEdge->next->source == potentialTwin->source) {
+				newEdge->twin = potentialTwin;
+				break;
+			}
+		}
+	}
+	//establishTwinRelationships();
+
+
+	// Libération de la mémoire des anciens éléments et mise à jour des collections
+	for (myFace* f : faces) {
+		delete f; // Libère la mémoire allouée pour chaque ancienne face
+	}
+	for (myHalfedge* e : halfedges) {
+		delete e; // Libère la mémoire allouée pour chaque ancienne demi-arête
+	}
+	//for (myVertex* v : vertices) {
+	//	delete v; // Libère la mémoire allouée pour chaque ancien sommet qui n'a pas été déplacé.
+	//}
+
+	// Mise à jour des collections avec les nouveaux éléments
+	faces = newFaces;
+	halfedges = newHalfedges;
+	vertices = newVertices;
+
+	//establishTwinRelationships();
+	// Vérifie l'intégrité du nouveau maillage
+	checkMesh();
 }
+
+

@@ -15,6 +15,7 @@ public:
 	myHalfedge *next;
 	myHalfedge *prev;
 	myHalfedge *twin;
+	myVertex * edgePoint;
 
 	int index; //use as you wish.
 

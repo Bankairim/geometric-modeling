@@ -11,6 +11,7 @@ myHalfedge::myHalfedge(void)
 	next = NULL;  
 	prev = NULL;  
 	twin = NULL;  
+    edgePoint = NULL;
 }
 
 void myHalfedge::copy(myHalfedge *ie)

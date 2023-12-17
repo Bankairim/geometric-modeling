@@ -17,6 +17,8 @@ class myMesh
 public:
 	std::vector<myVertex *> vertices;
 	std::vector<myHalfedge *> halfedges;
+	/*std::map<myFace*, myVertex*> facePoints;
+	std::map<myHalfedge*, myVertex*> edgePoints;*/
 	//std::map<std::pair<int, int>, myHalfedge*> twin_map;
 	std::vector<myFace *> faces;
 	std::string name;
@@ -31,8 +33,6 @@ public:
 	bool readFile(std::string filename);
 	void computeNormals();
 	void normalize();
-
-	void subdivisionCatmullClark();
 
 	void splitFaceTRIS(myFace *, myPoint3D *);
 
@@ -57,16 +57,18 @@ public:
 	~myMesh(void);
 
 	//For simplification
-	//void allCollapse(double d);
-	//bool myMesh::collapse(myHalfedge* e, std::vector<myFace*>& facesToDelete, std::vector<myHalfedge*>& halfedgesToDelete, std::vector<myVertex*>& verticesToDelete);
+
 	bool myMesh::collapse(myHalfedge* e);
 	bool myMesh::collapse();
-	//void myMesh::collapse(myHalfedge* e);
-	//double distance(myPoint3D* p1, myPoint3D* p2);
 	myPoint3D* bestPosition(myPoint3D* p1, myPoint3D* p2);
-	//bool checkTriangulate(myFace* f);
 	myHalfedge* findMinimalHalfedge();
 	void myMesh::displayAllHalfEdgeProperties();
-	void myMesh::allCollapse(double d);
+	//void myMesh::allCollapse(double d);
+	
 
+
+	// For subdivision
+	void myMesh::subdivisionCatmullClark();
+	myVertex* myMesh::computeFacePoints(myFace* f);
+	myPoint3D* myMesh::averageOfFourPoints(myPoint3D* p1, myPoint3D* p2, myPoint3D* f1, myPoint3D* f2);
 };

@@ -9,7 +9,20 @@ myVertex::myVertex(void)
 	point = NULL;
 	originof = NULL;
 	normal = new myVector3D(1.0,1.0,1.0);
+    
 }
+
+myVertex::myVertex(myPoint3D* pt) {
+    if (pt) {
+        point = new myPoint3D(*pt); // Copie profonde du point.
+    }
+    else {
+        point = new myPoint3D(0.0, 0.0, 0.0); // Point par défaut si pt est NULL.
+    }
+    originof = NULL;
+    normal = new myVector3D(1.0, 1.0, 1.0);
+}
+
 
 myVertex::~myVertex(void)
 {

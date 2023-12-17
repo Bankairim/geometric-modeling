@@ -1,0 +1,115 @@
+bool knitPolycurves(std::vector<myVertex * > A,std::vector<myVertex * > B,) //Polymesh A et B
+{
+	std::vector<myHalfedge * > edges;
+	if(A.size() != B.size())return false;
+	for(int i=0;i< A.size() -1 ;++i) 
+	{
+		//Création des halfedges de la premiere face
+		myHalfEdge* he0 = new myHalfEdge*;
+		myHalfEdge* he1 = new myHalfEdge*;
+		myHalfEdge* he2 = new myHalfEdge*;
+		
+		//Création des halfedges de la deuxieme face
+		myHalfEdge* he3 = new myHalfEdge*;
+		myHalfEdge* he4 = new myHalfEdge*;
+		myHalfEdge* he5 = new myHalfEdge*;
+		
+		he0->source = A[i];
+		he1->source = B[i];
+		he2->source = B[i+1];
+		
+		he3->source = A[i];
+		he4->source = B[i+1];
+		he5->source = A[i+1];
+		
+		he3->next = he4;
+		he4->next = he5;
+		he5->next = he3;
+		
+		
+		he0->next = he1;
+		he1->next = he2;
+		he2->next = he0;
+		
+		he0->prev = he2;
+		he1->prev = he0;
+		he2->prev = he1;
+		
+		he3->prev = he5;
+		he4->prev = he3;
+		he5->prev = he4;
+		
+		if(i!=0)
+		{
+			he0->twin = edges[i*6 -2 ]; 
+			edges[i*6 -2] = he0->twin;
+		}
+		he2->twin = he3;
+		he3->twin = he2;
+		
+		edges.push(he0);
+        edges.push(he1);
+        edges.push(he2);
+        edges.push(he3);
+        edges.push(he4);
+        edges.push(he5);
+	}
+	return true;
+}
+
+
+bool knitPolycurves(std::vector<myHalfEdge*> curve1, std::vector<myHalfEdge*> curve2) {
+    // Vérification que les deux courbes ne sont pas vides
+    if(curve1.empty() || curve2.empty()) return false;
+
+    std::vector<myHalfEdge*> newHalfEdges;
+    myHalfEdge* he1 = curve1.begin();
+    myHalfEdge* he2 = curve2.begin();
+
+    // Calcule le nombre minimum d'étapes de la boucle
+    int s = std::min(curve1.size(), curve2.size());
+    
+    // Parcourir chaque paire d'half-edges des deux courbes
+    for(int i = 0; i < s; ++i) {
+        // Récupérer les vertices de départ des half-edges actuels
+        myVertex* v1 = (*he1)->source;
+        myVertex* v2 = (*he2)->source;
+
+        // Créer de nouveaux half-edges pour former un triangle
+        myHalfEdge* e1 = new myHalfEdge;
+        myHalfEdge* e2 = new myHalfEdge;
+        myHalfEdge* e3 = new myHalfEdge;
+
+        // Configurer les sources des nouveaux half-edges
+        e1->source = v1;
+        e2->source = v2;
+        e3->source = (*he2)->next->source;
+
+        // Configurer la relation 'next' pour chaque half-edge
+        e1->next = e2;
+        e2->next = e3;
+        e3->next = e1;
+
+        // Configurer la relation 'prev' pour les half-edges existants
+        (*he1)->prev = e3;
+        (*he2)->prev = e1;
+        e3->prev = (*he2);
+
+        // Ajouter les nouveaux half-edges à la liste
+        newHalfEdges.push_back(e1);
+        newHalfEdges.push_back(e2);
+        newHalfEdges.push_back(e3);
+
+        // Avancer dans les listes des half-edges des courbes
+        ++he1;
+        ++he2;
+
+        // Gérer la condition de bouclage pour des courbes circulaires
+        if (he1 == curve1.end()) he1 = curve1.begin();
+        if (he2 == curve2.end()) he2 = curve2.begin();
+    }
+
+    // Votre code ici pour intégrer les nouveaux half-edges dans les structures existantes
+
+    return true; // ou retourner une valeur appropriée selon le cas
+}

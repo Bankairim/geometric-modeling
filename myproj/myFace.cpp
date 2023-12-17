@@ -9,6 +9,7 @@ myFace::myFace(void)
 {
 	adjacent_halfedge = NULL;
 	normal = new myVector3D(1.0, 1.0, 1.0);
+    facePoint = NULL;
 }
 
 myFace::~myFace(void)
@@ -25,9 +26,9 @@ myFace& myFace::operator=(const myFace& other) {
         return *this;
     }
 
-    // Copiez la halfedge adjacente (assurez-vous que c'est une copie superficielle ou profonde selon vos besoins)
+    // Copiez la halfedge adjacente 
     this->adjacent_halfedge = other.adjacent_halfedge;
-
+    this->facePoint = other.facePoint;
     // Copiez la normale (créez un nouvel objet myVector3D pour éviter le partage de la mémoire)
     if (other.normal) {
         if (this->normal) {
@@ -43,7 +44,6 @@ myFace& myFace::operator=(const myFace& other) {
             this->normal = nullptr;
         }
     }
-
     // Retourne la référence à cet objet
     return *this;
 }
