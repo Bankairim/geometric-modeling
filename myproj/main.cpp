@@ -222,7 +222,7 @@ void display()
 		glLineWidth(1.0);
 		glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(2.0f, 2.0f); //for z-bleeding, z-fighting.
 		if (drawsilhouette && !drawmesh)  glUniform1i(glGetUniformLocation(shaderprogram, "type"), 1);
-		if (drawmesh) { color[0] = 0.4f, color[1] = 0.8f, color[2] = 0.4f, color[3] = 1.0f; }
+		if (drawmesh) { color[0] = 1.0f, color[1] = 0.1f, color[2] = 0.1f, color[3] = 1.0f; }
 		else { color[0] = 1.0f, color[1] = 1.0f, color[2] = 1.0f, color[3] = 1.0f; }
 		glUniform4fv(glGetUniformLocation(shaderprogram, "kd"), 1, &color[0]);
 

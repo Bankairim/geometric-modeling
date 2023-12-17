@@ -154,44 +154,34 @@ void myMesh::checkVertice(myVertex* v) {
 	} while (current && current != start);
 }
 
-// Fonction pour lire un fichier .obj et stocker ses données dans la structure halfedge.
+
 bool myMesh::readFile(std::string filename)
 {
-	// Déclaration de variables pour stocker les lignes du fichier, les types d'éléments (comme "v" pour les sommets ou "f" pour les faces) et les données temporaires.
-	string s, t, u;
-	vector<int> faceids; // Pour stocker les identifiants des sommets des faces.
-	myHalfedge** hedges; // Pointeur vers le tableau de halfedges.
 
-	// Ouvrir le fichier .obj pour la lecture.
+	string s, t, u;
+	vector<int> faceids; 
+	myHalfedge** hedges; 
+
+
 	ifstream fin(filename);
-	// Si le fichier ne peut pas être ouvert, afficher un message d'erreur et retourner false.
 	if (!fin.is_open()) {
 		cout << "Unable to open file!\n";
 		return false;
 	}
-	// Stocker le nom du fichier pour une utilisation ultérieure.
 	name = filename;
 
-	// Créer une map pour stocker les halfedges et leurs jumeaux (twins).
 	//map<pair<int, int>, myHalfedge*> twin_map; 
 	map<pair<int, int>, myHalfedge*>::iterator it;
 	int verticeNumber = 0;
-	// Lire le fichier ligne par ligne.
 	while (getline(fin, s))
 	{
-		// Utiliser un stringstream pour extraire les données de la ligne.
 		stringstream myline(s);
-		myline >> t; // Extraire le type d'élément (comme "v" ou "f").
-
-		// Si l'élément est un groupe ("g"), ne rien faire.
-		if (t == "g") {}
-		// Si l'élément est un sommet ("v").
-		else if (t == "v")
+		myline >> t; 
+		if (t == "v")
 		{
 			float x, y, z;
-			// Extraire les coordonnées x, y et z du sommet.
+
 			myline >> x >> y >> z;
-			// Afficher les coordonnées pour le débogage.
 			cout << "v " << x << " " << y << " " << z << " index : " << verticeNumber << endl;
 			myPoint3D* Pt = new myPoint3D(x, y, z);
 			myVertex* v = new myVertex();
@@ -277,7 +267,7 @@ bool myMesh::readFile(std::string filename)
 			
 		}
 	}
-	cout << " Readfile terminé. Vertices size : " << vertices.size() << endl;
+	cout << " Readfile is good. Vertices size : " << vertices.size() << endl;
 	//clearTwinRelationships();
 	//establishTwinRelationships();
 	// Vérifier la cohérence du maillage.
@@ -292,18 +282,17 @@ bool myMesh::readFile(std::string filename)
 
 void myMesh::computeNormals()
 {
-	// Parcourir toutes les  faces et calculer leurs normales
 	for (myFace* f : faces)
 	{
 		f->computeNormal();
 	}
-	// Vérifier si 'vertices' est non vide avant d'appeler computeNormal
+
 	if (!vertices.empty()) {
-		// Parcourir tous les sommets et calculer leurs normales
+		// calculate normals of all vertices
 		cout << "Vertices size : " << vertices.size() << endl;
 		for (int i=0;i < vertices.size();i++)
 		{
-			//A ce stade la, v est censé avoir un point et un originof du readfile et va obtenir une normal basée sur son originof.
+			// At this stage, v is supposed to have a point and a originof.
 			//cout << "vertices[" << i << "] " << endl;
 			//checkVertice(vertices[i]);
 			if (vertices[i]) vertices[i]->computeNormal();
@@ -396,6 +385,7 @@ void myMesh::clearTwinRelationships() {
 //	// search for the twins using twin_map
 //}
 
+//Unit test for triangulation.
 void myMesh::testTriangulate()
 {
 	triangulate();
@@ -490,16 +480,16 @@ void myMesh::triangulate() {
 	//checkHalfEdgeReferences();
 }
 bool myMesh::triangulate(myFace* f) {
-	myVertex* center = createCenterVertex(f);  // Calculer le point central de la face
-	vertices.push_back(center);  // Ajouter le point central à la liste des sommets
+	myVertex* center = createCenterVertex(f);  
+	vertices.push_back(center);  
 
-	myHalfedge* startEdge = f->adjacent_halfedge;  // Demi-arête de départ pour la face
-	myHalfedge* currentEdge = startEdge;  // Demi-arête courante
-	myHalfedge* nextEdge = currentEdge;  // Demi-arête suivante
-	myHalfedge* twinEdge = nullptr;  // Demi-arête jumelle pour la demi-arête allant du centre vers un sommet
+	myHalfedge* startEdge = f->adjacent_halfedge;  
+	myHalfedge* currentEdge = startEdge; 
+	myHalfedge* nextEdge = currentEdge;  //For twin connections.
+	myHalfedge* twinEdge = nullptr; 
 
 	do {
-		nextEdge = nextEdge->next;  // Passer à la demi-arête suivante
+		nextEdge = nextEdge->next;  
 
 		// Création d'une nouvelle face pour le triangle
 		myFace* triangleFace = new myFace();
@@ -510,17 +500,17 @@ bool myMesh::triangulate(myFace* f) {
 		myHalfedge* edge1 = new myHalfedge();  // Demi-arête allant d'un sommet de la face vers le centre
 		myHalfedge* edge2 = new myHalfedge();  // Demi-arête allant du centre vers le sommet suivant de la face
 
-		// Configuration de edge1
+		// Edge1 configuration
 		edge1->source = currentEdge->next->source;
 		edge1->adjacent_face = triangleFace;
 		edge1->source->originof = edge1;
 
-		// Configuration de edge2
+		// Edge2 configuration
 		edge2->source = center;
 		edge2->adjacent_face = triangleFace;
 		center->originof = edge2;
 
-		// Connexion des demi-arêtes pour former le triangle
+		// Connexion halfedge to make the triangle
 		currentEdge->next = edge1;
 		edge1->next = edge2;
 		edge2->next = currentEdge;
@@ -530,22 +520,20 @@ bool myMesh::triangulate(myFace* f) {
 		edge2->prev = edge1;
 
 
-		// Ajouter les nouvelles demi-arêtes à la liste des demi-arêtes
+		// Add the 2 new halfedges to halfedges list
 		halfedges.push_back(edge1);
 		halfedges.push_back(edge2);
 
-		// Configuration des twins (jumelles)
+		// twin config
 		if (twinEdge != nullptr) {
 			edge2->twin = twinEdge;
 			twinEdge->twin = edge2;
 		}
-		twinEdge = edge1;  // edge1 sera le twin de la demi-arête allant du centre vers un sommet pour le triangle suivant
-
-		// Passer à la demi-arête suivante
+		twinEdge = edge1;  
+		//Edge1 will be the twin of the halfedge going from center to a vertex for next triangle.
 		currentEdge = nextEdge;
 	} while (currentEdge != startEdge);
 
-	// Connecter le twin de la dernière demi-arête créée
 	startEdge->prev->twin = twinEdge;
 	twinEdge->twin = startEdge->prev;
 	return true;
@@ -581,7 +569,7 @@ myVertex* myMesh::createCenterVertex(myFace* f) {
 	do {
 		center += *(edge->source->point);
 		count++;
-		edge = edge->next; // Parcourir les demi-arêtes de la face
+		edge = edge->next; 
 	} while (edge != f->adjacent_halfedge);
 
 	if (count > 0) {
@@ -591,19 +579,17 @@ myVertex* myMesh::createCenterVertex(myFace* f) {
 	myVertex* centerVertex = new myVertex();
 	centerVertex->point = new myPoint3D(center.X, center.Y, center.Z);
 
-	// Assign the next available index to the new vertex
 	centerVertex->index = vertices.size();
 
 	vertices.push_back(centerVertex);
 
-	//cout << "Created Center Vertex with Index: " << centerVertex->index << endl;
 
 	return centerVertex;
 }
 
-
+// Unit test to display half-edge properties
 void myMesh::testHalfEdgeProperties(std::vector<myHalfedge*>& halfedges) {
-	// Function to display half-edge properties
+	
 	auto displayHalfEdgeProperties = [](myHalfedge* he) {
 		if (he && he->source && he->next && he->next->source) {
 			cout << "Half-edge from vertex he->source->index " << he->source->index << " to vertex he->next->source->index " << he->next->source->index;
@@ -621,9 +607,6 @@ void myMesh::testHalfEdgeProperties(std::vector<myHalfedge*>& halfedges) {
 	for (auto& he : halfedges) {
 		displayHalfEdgeProperties(he);
 	}
-
-	// Correcting twin assignments
-	/*correctTwinAssignments(halfedges);*/
 
 	cout << "\nHalf-edges after twin assignment:" << endl;
 	for (auto& he : halfedges) {
@@ -725,8 +708,7 @@ myHalfedge* myMesh::findMinimalHalfedge() {
 	return minEdge;
 }
 
-
-
+//Unit test to check all the halfedges.
 void myMesh::displayAllHalfEdgeProperties() {
 	for (auto& he : halfedges) {
 		if (he) {
@@ -736,10 +718,9 @@ void myMesh::displayAllHalfEdgeProperties() {
 }
 
 
-
+//Simplification for 1 halfedge.
 bool myMesh::collapse(myHalfedge* e) {
-	//myHalfedge* e = findMinimalHalfedge();
-	if (!e || !e->twin) return false; // Vérifier la présence de l'halfedge et de son jumeau
+	if (!e || !e->twin) return false;
 	myVertex* newVertex = new myVertex();
 	myVertex* v1 = new myVertex();
 	myVertex* v2 = new myVertex();
@@ -777,13 +758,13 @@ bool myMesh::collapse(myHalfedge* e) {
 			f->adjacent_halfedge = e->next;
 		}
 	}
-	// Effacer v1 si présent
+	// Erase v1 if present in vertices
 	auto itV1 = std::remove(vertices.begin(), vertices.end(), v1);
 	if (itV1 != vertices.end()) {
 		vertices.erase(itV1, vertices.end());
 	}
 
-	// Effacer v2 si présent
+	// erase v2 if in vertices
 	auto itV2 = std::remove(vertices.begin(), vertices.end(), v2);
 	if (itV2 != vertices.end()) {
 		vertices.erase(itV2, vertices.end());
@@ -808,12 +789,10 @@ bool myMesh::collapse()
 	myHalfedge* e = findMinimalHalfedge();
 	return(collapse(e));
 }
-
+//returns center point for one face
 myVertex* myMesh::computeFacePoints(myFace* f) {
-	// Étape 1 : ajoute un point pour chaque face.
 	myVertex* facePt = new myVertex();
-	facePt->point = new myPoint3D();
-	myPoint3D sum;
+	facePt->point = new myPoint3D(0, 0, 0);
 	int vertexCount = 0;
 
 	myHalfedge* start = f->adjacent_halfedge;
@@ -832,50 +811,48 @@ myVertex* myMesh::computeFacePoints(myFace* f) {
 
 
 void myMesh::subdivisionCatmullClark() { 
+	//Step one
 	for (myFace* f : faces) {
-		f->facePoint = computeFacePoints(f); // Utilise l'attribut facePoint
+		f->facePoint = computeFacePoints(f);
 	}
-	//// Étape 2: Pour chaque arête, ajouter un point d'arête.
-	//std::map<std::pair<myVertex*, myVertex*>, myPoint3D> edgePoints;
+	//// Step 2 center point for each halfedge.
 	for (myHalfedge* he : halfedges) {
 		if (he->edgePoint == nullptr && he->twin->edgePoint == nullptr) {
-			he->edgePoint = new myVertex(); // Utilise l'attribut edgePoint
+			he->edgePoint = new myVertex();
 			he->edgePoint->point = new myPoint3D();
 
-			// Deux extrémités (M, E) de l'arête
+			// halfedge vertices (M, E) 
 			myPoint3D M = *(he->source->point);
 			myPoint3D E = *(he->twin->source->point);
 
 			if (he->adjacent_face && he->twin->adjacent_face) {
-				// Points de face des faces adjacentes
-				myPoint3D A = *(he->adjacent_face->facePoint->point); // Utilise l'attribut facePoint de myFace
+				// Facepoints of adjacent faces
+				myPoint3D A = *(he->adjacent_face->facePoint->point);
 				myPoint3D F = *(he->twin->adjacent_face->facePoint->point);
 
 				*(he->edgePoint->point) = (A + F + M + E) / 4;
 			}
 
-			he->twin->edgePoint = he->edgePoint; // Duplique le point pour l'arête jumelle
+			he->twin->edgePoint = he->edgePoint; 
 		}
 	}
 
-	// Mise à jour de chaque point original (P)
 	for (myVertex* v : vertices) {
 		myPoint3D* originalPos = new myPoint3D(*(v->point));
-		myPoint3D* faceAverage = new myPoint3D(); // Moyenne de tous les points de face pour les faces touchant P
-		myPoint3D* edgeAverage = new myPoint3D(); // Moyenne de tous les milieux d'arête pour les arêtes originales touchant P
+		myPoint3D* faceAverage = new myPoint3D(); // for the faces touching P
+		myPoint3D* edgeAverage = new myPoint3D(); // For the original halfedges touchant P
 
-		int n = 0; // Nombre de faces adjacentes et aussi d'arêtes voisines de P
+		int n = 0;// number of adjacent halfedges and faces of P
 
 		myHalfedge* startEdge = v->originof;
 		myHalfedge* currentEdge = startEdge;
 
 		do {
-			// Ajoute la position du point de face
+			// Common mistake here to mix between face average and midpoint.
 			*faceAverage += *(currentEdge->adjacent_face->facePoint->point);
-
-			// Ajoute la position du point d'arête
+			myPoint3D midpoint = (*(currentEdge->source->point) + *(currentEdge->twin->source->point)) / 2;
 			if (currentEdge->edgePoint != nullptr) {
-				*edgeAverage += *(currentEdge->edgePoint->point);
+				*edgeAverage += midpoint;
 			}
 
 			n++;
@@ -888,12 +865,11 @@ void myMesh::subdivisionCatmullClark() {
 			*edgeAverage /= n;
 		}
 
-		// Calculer la nouvelle position
+		// new position
 		if (n > 3) {
 			*(v->point) = ((*faceAverage) + (*edgeAverage) * 2 + (*originalPos) * (n - 3)) / n;
 		}
 		else if (n > 0) {
-			// Gestion des cas où n est inférieur à 4
 			*(v->point) = ((*faceAverage) + (*edgeAverage) * 2) / n;
 		}
 
@@ -903,9 +879,9 @@ void myMesh::subdivisionCatmullClark() {
 	std::vector<myFace*> newFaces;
 	std::vector<myHalfedge*> newHalfedges;
 	std::vector<myVertex*> newVertices;
-
-	// Lambda function to add a vertex if it's not already in the vector
-	auto addVertexIfNotExists = [&](myVertex* vertex) {
+	
+	//function from steeve
+	auto addVertex = [&](myVertex* vertex) {
 		if (std::find(newVertices.begin(), newVertices.end(), vertex) == newVertices.end()) {
 			newVertices.push_back(vertex);
 		}
@@ -918,6 +894,7 @@ void myMesh::subdivisionCatmullClark() {
 
 		do {
 			myFace* newFace = new myFace();
+			newFaces.push_back(newFace);
 
 			myHalfedge* edge1 = new myHalfedge();
 			myHalfedge* edge2 = new myHalfedge();
@@ -926,9 +903,9 @@ void myMesh::subdivisionCatmullClark() {
 
 			// Set the new vertices
 			myVertex* updatedVertex = currentEdge->source;
-			myVertex* edgePoint1 = currentEdge->edgePoint; // Utilise l'attribut edgePoint
-			myVertex* facePoint = oldFace->facePoint; // Utilise l'attribut facePoint
-			myVertex* edgePoint2 = currentEdge->prev->edgePoint; // Utilise l'attribut edgePoint
+			myVertex* edgePoint1 = currentEdge->edgePoint; 
+			myVertex* facePoint = oldFace->facePoint; 
+			myVertex* edgePoint2 = currentEdge->prev->edgePoint; 
 
 			// Connect the new half-edges
 			edge1->source = updatedVertex;
@@ -955,21 +932,18 @@ void myMesh::subdivisionCatmullClark() {
 			edge4->adjacent_face = newFace;
 			edge4->source->originof = edge4;
 			edgePoint2->originof = edge4;
-			
-			
-			
-			newFaces.push_back(newFace);
+
 			newHalfedges.insert(newHalfedges.end(), { edge1, edge2, edge3, edge4 });
 
-			addVertexIfNotExists(updatedVertex);
-			addVertexIfNotExists(edgePoint1);
-			addVertexIfNotExists(facePoint);
-			addVertexIfNotExists(edgePoint2);
+			addVertex(updatedVertex);
+			addVertex(edgePoint1);
+			addVertex(facePoint);
+			addVertex(edgePoint2);
 
 			currentEdge = currentEdge->next;
 		} while (currentEdge != startEdge);
 	}
-	// Assignation du jumeau pour chaque nouvelle demi-arête
+	// Twins
 	for (myHalfedge* newEdge : newHalfedges) {
 		for (myHalfedge* potentialTwin : newHalfedges) {
 			if (newEdge->source == potentialTwin->next->source && newEdge->next->source == potentialTwin->source) {
@@ -980,23 +954,18 @@ void myMesh::subdivisionCatmullClark() {
 	}
 
 
-	// Libération de la mémoire des anciens éléments et mise à jour des collections
+	// remove old data from memory
 	for (myFace* f : faces) {
-		delete f; // Libère la mémoire allouée pour chaque ancienne face
+		delete f; 
 	}
 	for (myHalfedge* e : halfedges) {
-		delete e; // Libère la mémoire allouée pour chaque ancienne demi-arête
+		delete e; 
 	}
-	//for (myVertex* v : vertices) {
-	//	delete v; // Libère la mémoire allouée pour chaque ancien sommet qui n'a pas été déplacé.
-	//}
 
-	// Mise à jour des collections avec les nouveaux éléments
 	faces = newFaces;
 	halfedges = newHalfedges;
 	vertices = newVertices;
 
-	// Vérifie l'intégrité du nouveau maillage
 	checkMeshAdvanced();
 }
 

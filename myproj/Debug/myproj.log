@@ -1,4 +1,10 @@
 ﻿  main.cpp
 C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(285,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
 C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\main.cpp(286,18): warning C4244: 'initialisation' : conversion de 'double' en 'float', perte possible de données
+  myMesh.cpp
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(293,18): warning C4018: '<' : incompatibilité signed/unsigned
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(473,20): warning C4018: '<' : incompatibilité signed/unsigned
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(782,20): warning C4018: '<' : incompatibilité signed/unsigned
+C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\myproj\myMesh.cpp(786,21): warning C4018: '<' : incompatibilité signed/unsigned
+  Génération de code en cours...
   myproj.vcxproj -> C:\Users\ASUS\Documents\A - Cours E4\GeometricModeling\MeshViewerCMake\meshviewer-init\meshviewer-init\Debug\myproj.exe
