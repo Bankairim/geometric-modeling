@@ -22,6 +22,7 @@ public:
 	//std::map<std::pair<int, int>, myHalfedge*> twin_map;
 	std::vector<myFace *> faces;
 	std::string name;
+	std::map<std::pair<int, int>, myHalfedge*> twinMap;
 
 	void checkMesh();
 	bool checkMeshAdvanced();
@@ -46,8 +47,9 @@ public:
 	bool triangulate(myFace *);;
 	//void myMesh::createTriangles(myVertex* centerVertex, const std::vector<myVertex*>& faceVertices, std::vector<myHalfedge*>& newHalfedges, const std::map<std::pair<int, int>, myHalfedge*>& edgeMap);
 
-	void myMesh::createTriangles(myVertex* centerVertex, const std::vector<myVertex*>& faceVertices, std::vector<myHalfedge*>& newHalfedges);
+	void myMesh::createTriangles(myVertex* centerVertex, const std::vector<myVertex*>& faceVertices);
 	myVertex* myMesh::createCenterVertex(const std::vector<myVertex*>& faceVertices);
+	myVertex* myMesh::createCenterVertex(myFace* f);
 	void updateTwinHalfedges();
 	void createTriangle(myVertex* A, myVertex* B, myVertex* C);
 

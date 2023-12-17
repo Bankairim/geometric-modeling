@@ -64,8 +64,8 @@ void menu(int item)
 	}
 	case MENU_TRIANGULATE:
 		{
-			m->triangulate();
-			//m->testTriangulate();
+			//m->triangulate();
+			m->testTriangulate();
 			m->computeNormals();
 			makeBuffers(m);
 			break;
@@ -403,7 +403,7 @@ void initMesh()
 	closest_face = NULL;
 
 	m = new myMesh();
-	if (m->readFile("cube.obj")) {
+	if (m->readFile("dolphin.obj")) {
 		m->computeNormals();
 		makeBuffers(m);
 	}
